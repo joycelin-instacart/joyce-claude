@@ -63,6 +63,39 @@ test_backup_drops_deleted_skill() {
 }
 run_test "backup drops deleted skill" test_backup_drops_deleted_skill
 
+test_plugin_folder_has_skill() {
+  add_skill foo "foo desc"
+  bash "$ROOT/sync.sh"
+  [[ -f "$STACK_REPO/foo/skills/foo/SKILL.md" ]] || { echo "missing skill in plugin folder"; return 1; }
+}
+run_test "plugin folder has skill" test_plugin_folder_has_skill
+
+test_plugin_json_scaffold() {
+  add_skill foo "foo desc"
+  bash "$ROOT/sync.sh"
+  local pj="$STACK_REPO/foo/.claude-plugin/plugin.json"
+  [[ -f "$pj" ]] || { echo "missing plugin.json"; return 1; }
+  local name desc version
+  name=$(jq -r .name "$pj")
+  desc=$(jq -r .description "$pj")
+  version=$(jq -r .version "$pj")
+  [[ "$name" == "foo" ]] || { echo "wrong name: $name"; return 1; }
+  [[ "$desc" == "foo desc" ]] || { echo "wrong desc: $desc"; return 1; }
+  [[ "$version" == "1.0.0" ]] || { echo "wrong version: $version"; return 1; }
+}
+run_test "plugin.json scaffolded" test_plugin_json_scaffold
+
+test_plugin_folder_pruned_on_delete() {
+  add_skill foo
+  add_skill bar
+  bash "$ROOT/sync.sh"
+  rm -rf "$CLAUDE_HOME/skills/bar"
+  rm -f "$STATE_FILE"
+  bash "$ROOT/sync.sh"
+  [[ ! -d "$STACK_REPO/bar" ]] || { echo "plugin folder for deleted skill still exists"; return 1; }
+}
+run_test "plugin folder pruned on delete" test_plugin_folder_pruned_on_delete
+
 # --- end test cases ---
 
 echo

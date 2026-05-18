@@ -65,5 +65,37 @@ if [[ -d "$CLAUDE_HOME/commands" ]]; then
   rsync -a --delete "$CLAUDE_HOME/commands/" "$STACK_REPO/backup/commands/"
 fi
 
+# --- plugin folders ---
+for name in "${personal_skills[@]}"; do
+  plugin_dir="$STACK_REPO/$name"
+  mkdir -p "$plugin_dir/.claude-plugin" "$plugin_dir/skills"
+
+  # Mirror skill content into the plugin folder
+  rsync -a --delete "$CLAUDE_HOME/skills/$name/" "$plugin_dir/skills/$name/"
+
+  # Scaffold plugin.json if missing (preserves any hand-edited version on subsequent runs)
+  pj="$plugin_dir/.claude-plugin/plugin.json"
+  if [[ ! -f "$pj" ]]; then
+    "$SCRIPT_DIR/parse_frontmatter.py" "$CLAUDE_HOME/skills/$name/SKILL.md" > "$pj"
+  fi
+done
+
+# Prune plugin folders for deleted skills.
+# A directory at the repo root is "managed" iff it has .claude-plugin/plugin.json
+# AND its name appears (or used to appear) as a personal skill. To stay safe, only
+# prune directories that match a known sync-managed shape and are no longer present.
+while IFS= read -r -d '' dir; do
+  name="$(basename "$dir")"
+  # Skip non-plugin top-level dirs
+  [[ -f "$dir/.claude-plugin/plugin.json" ]] || continue
+  keep=0
+  for s in "${personal_skills[@]:-}"; do
+    [[ "$s" == "$name" ]] && { keep=1; break; }
+  done
+  (( keep == 0 )) && rm -rf "$dir"
+done < <(find "$STACK_REPO" -mindepth 1 -maxdepth 1 -type d \
+  ! -name '.git' ! -name '.claude-plugin' ! -name 'backup' \
+  ! -name 'docs' ! -name 'scripts' -print0)
+
 touch "$STATE_FILE"
 log "sync complete"

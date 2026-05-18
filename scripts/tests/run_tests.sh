@@ -146,6 +146,52 @@ test_marketplace_json_drops_deleted() {
 }
 run_test "marketplace.json drops deleted" test_marketplace_json_drops_deleted
 
+test_sync_commits_and_pushes() {
+  add_skill foo "foo desc"
+  bash "$ROOT/sync.sh"
+  local subject
+  subject=$(git -C "$STACK_REPO" log -1 --format=%s)
+  [[ "$subject" == sync:* ]] || { echo "no sync commit; got subject: $subject"; return 1; }
+  local remote_head local_head
+  remote_head=$(git -C "$STACK_REPO" rev-parse origin/main)
+  local_head=$(git -C "$STACK_REPO" rev-parse HEAD)
+  [[ "$remote_head" == "$local_head" ]] || { echo "remote not in sync with local"; return 1; }
+}
+run_test "sync commits and pushes" test_sync_commits_and_pushes
+
+test_sync_no_commit_when_no_diff() {
+  add_skill foo
+  bash "$ROOT/sync.sh"
+  local before_sha
+  before_sha=$(git -C "$STACK_REPO" rev-parse HEAD)
+  rm -f "$STATE_FILE"
+  bash "$ROOT/sync.sh"
+  local after_sha
+  after_sha=$(git -C "$STACK_REPO" rev-parse HEAD)
+  [[ "$before_sha" == "$after_sha" ]] || { echo "unexpected commit when no diff"; return 1; }
+}
+run_test "sync no commit when no diff" test_sync_no_commit_when_no_diff
+
+test_sync_recovers_after_push_failure() {
+  add_skill foo
+  git -C "$STACK_REPO" remote set-url origin "$TMP_ROOT/no-such-remote.git"
+  if bash "$ROOT/sync.sh" 2>/dev/null; then
+    echo "expected sync.sh to exit nonzero on push failure"; return 1
+  fi
+  grep -q "push failed" "$LOG_FILE" || { echo "push failure not logged"; return 1; }
+  local subject
+  subject=$(git -C "$STACK_REPO" log -1 --format=%s)
+  [[ "$subject" == sync:* ]] || { echo "expected local sync commit even on push failure"; return 1; }
+  git -C "$STACK_REPO" remote set-url origin "$TMP_ROOT/remote.git"
+  rm -f "$STATE_FILE"
+  bash "$ROOT/sync.sh"
+  local remote_head local_head
+  remote_head=$(git -C "$STACK_REPO" rev-parse origin/main)
+  local_head=$(git -C "$STACK_REPO" rev-parse HEAD)
+  [[ "$remote_head" == "$local_head" ]] || { echo "recovery push did not catch up remote"; return 1; }
+}
+run_test "sync recovers after push failure" test_sync_recovers_after_push_failure
+
 # --- end test cases ---
 
 echo

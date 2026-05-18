@@ -141,5 +141,46 @@ jq -n \
 
 mv "$mp_tmp" "$STACK_REPO/.claude-plugin/marketplace.json"
 
-touch "$STATE_FILE"
-log "sync complete"
+# --- ensure .gitignore excludes runtime files ---
+gitignore="$STACK_REPO/.gitignore"
+for entry in ".sync-state" ".sync.log"; do
+  if ! grep -qxF "$entry" "$gitignore" 2>/dev/null; then
+    echo "$entry" >> "$gitignore"
+  fi
+done
+
+# --- commit and push if anything changed ---
+cd "$STACK_REPO"
+git add -A
+if ! git diff --cached --quiet; then
+  # Build a commit message from the changed plugin names
+  changed=$(git diff --cached --name-only | awk -F/ '{print $1}' | sort -u | grep -Ev '^(\.|backup|scripts|docs|README\.md|\.gitignore)$' | paste -sd, -)
+  msg="sync: ${changed:-update}"
+  git commit -q -m "$msg"
+  if git push -q origin main; then
+    log "pushed: $msg"
+    touch "$STATE_FILE"
+    log "sync complete"
+  else
+    log "push failed; next run will retry"
+    exit 1
+  fi
+else
+  # No new diff; but we may still be ahead of remote (e.g., previous push failed).
+  # Check if local HEAD is already on the remote — if not, retry the push.
+  local_head=$(git rev-parse HEAD)
+  remote_head=$(git ls-remote origin main 2>/dev/null | awk '{print $1}') || remote_head=""
+  if [[ -n "$remote_head" && "$remote_head" != "$local_head" ]]; then
+    if git push -q origin main; then
+      log "recovery push succeeded"
+      touch "$STATE_FILE"
+      log "sync complete"
+    else
+      log "push failed; next run will retry"
+      exit 1
+    fi
+  else
+    touch "$STATE_FILE"
+    log "no diff; nothing to commit"
+  fi
+fi

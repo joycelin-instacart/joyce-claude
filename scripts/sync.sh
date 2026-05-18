@@ -97,5 +97,22 @@ done < <(find "$STACK_REPO" -mindepth 1 -maxdepth 1 -type d \
   ! -name '.git' ! -name '.claude-plugin' ! -name 'backup' \
   ! -name 'docs' ! -name 'scripts' -print0)
 
+# --- bundle matching commands into plugin folders ---
+if [[ -d "$CLAUDE_HOME/commands" ]]; then
+  while IFS= read -r -d '' cmd; do
+    base="$(basename "$cmd" .md)"
+    matched=0
+    for s in "${personal_skills[@]:-}"; do
+      if [[ "$s" == "$base" ]]; then
+        mkdir -p "$STACK_REPO/$base/commands"
+        cp "$cmd" "$STACK_REPO/$base/commands/$base.md"
+        matched=1
+        break
+      fi
+    done
+    (( matched == 0 )) && log "unmatched command: $base (in backup/ only)"
+  done < <(find "$CLAUDE_HOME/commands" -mindepth 1 -maxdepth 1 -type f -name '*.md' -print0)
+fi
+
 touch "$STATE_FILE"
 log "sync complete"

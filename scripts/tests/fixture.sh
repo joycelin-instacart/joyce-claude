@@ -13,6 +13,7 @@ build_fixture() {
   export STACK_REPO="$TMP_ROOT/repo"
 
   export STATE_FILE="$STACK_REPO/.sync-state"
+  export LOG_FILE="$STACK_REPO/.sync.log"
 
   mkdir -p "$CLAUDE_HOME/skills" "$CLAUDE_HOME/commands"
   mkdir -p "$STACK_REPO"

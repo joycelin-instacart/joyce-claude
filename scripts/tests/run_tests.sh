@@ -96,6 +96,26 @@ test_plugin_folder_pruned_on_delete() {
 }
 run_test "plugin folder pruned on delete" test_plugin_folder_pruned_on_delete
 
+test_matching_command_bundled() {
+  add_skill foo
+  add_command foo
+  bash "$ROOT/sync.sh"
+  [[ -f "$STACK_REPO/foo/commands/foo.md" ]] || { echo "matching command not bundled"; return 1; }
+}
+run_test "matching command bundled" test_matching_command_bundled
+
+test_unmatched_command_warns() {
+  add_skill foo
+  add_command orphan
+  local out
+  out=$(bash "$ROOT/sync.sh" 2>&1)
+  [[ -f "$STACK_REPO/backup/commands/orphan.md" ]] || { echo "orphan missing from backup"; return 1; }
+  [[ ! -f "$STACK_REPO/orphan/commands/orphan.md" ]] || { echo "orphan unexpectedly bundled into plugin"; return 1; }
+  # Verify warning landed in log
+  grep -q "unmatched command: orphan" "$LOG_FILE" || { echo "no warning logged for orphan command"; return 1; }
+}
+run_test "unmatched command warns" test_unmatched_command_warns
+
 # --- end test cases ---
 
 echo

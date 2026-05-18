@@ -25,7 +25,15 @@ run_test() {
 
 # --- test cases (added by later tasks) ---
 
-# (none yet)
+test_noop_on_unchanged() {
+  add_skill foo
+  bash "$ROOT/sync.sh"
+  # Second invocation must be a fast-path no-op
+  local out
+  out=$(bash "$ROOT/sync.sh" 2>&1)
+  [[ "$out" == *"no-op"* ]] || { echo "expected 'no-op' in output, got: $out"; return 1; }
+}
+run_test "noop on unchanged" test_noop_on_unchanged
 
 # --- end test cases ---
 

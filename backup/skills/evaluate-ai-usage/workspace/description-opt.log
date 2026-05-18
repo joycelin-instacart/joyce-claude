@@ -4,3 +4,55 @@ Split: 12 train, 8 test (holdout=0.4)
 Iteration 1/5
 Description: Coach the user on getting more out of Claude Code. Use whenever the user asks how to be more productive with AI, wants their AI usage reviewed (current session or historical), asks "am I doing this right" / "is there a better way" / "how could I have used Claude better", or invokes /evaluate-ai-usage. Also consult the rubric in this skill before flagging an inline coaching moment so the nudge is grounded in a concrete dimension, not a vibe.
 ============================================================
+Train: 18/36 correct, precision=100% recall=0% accuracy=50% (77.5s)
+  [FAIL] rate=0/3 expected=True: am I getting good leverage out of claude code or am I just u
+  [FAIL] rate=0/3 expected=True: I want to be more deliberate about how I work with Claude. g
+  [FAIL] rate=0/3 expected=True: /evaluate-ai-usage
+  [FAIL] rate=0/3 expected=True: I keep restating the same preferences every session and I kn
+  [FAIL] rate=0/3 expected=True: ok I've been using Claude Code heavily for the past three we
+  [FAIL] rate=0/3 expected=True: honestly I keep ending sessions feeling like I'm just doing 
+  [PASS] rate=0/3 expected=False: I want a deep analysis of how I compare to other Claude.ai u
+  [PASS] rate=0/3 expected=False: can you review the PR I just opened https://github.com/insta
+  [PASS] rate=0/3 expected=False: I want feedback on this design doc I drafted for the BMO swi
+  [PASS] rate=0/3 expected=False: look at the way I structured this orchestrator in layers/orc
+  [PASS] rate=0/3 expected=False: can you help me figure out why my rspec tests in spec/domain
+  [PASS] rate=0/3 expected=False: what's your honest take on whether AI is making engineers wo
+Test : 12/24 correct, precision=100% recall=0% accuracy=50% (0.0s)
+  [FAIL] rate=0/3 expected=True: I just had a really long debugging session with claude — too
+  [FAIL] rate=0/3 expected=True: review my AI usage this week — scorecard plus the 1-2 things
+  [FAIL] rate=0/3 expected=True: I just finished implementing the BMO payment switcher across
+  [FAIL] rate=0/3 expected=True: look at my last 5 conversations and tell me the patterns — w
+  [PASS] rate=0/3 expected=False: how do I make my standup updates more useful? I keep ramblin
+  [PASS] rate=0/3 expected=False: review my code in app/forms/signup_form.rb — am I writing id
+  [PASS] rate=0/3 expected=False: I want to be more productive in my 1:1s with my manager. any
+  [PASS] rate=0/3 expected=False: evaluate whether this peacock_eligibility_service.rb impleme
+
+Improving description...
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/home/bento/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown/skills/skill-creator/scripts/run_loop.py", line 332, in <module>
+    main()
+  File "/home/bento/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown/skills/skill-creator/scripts/run_loop.py", line 297, in main
+    output = run_loop(
+  File "/home/bento/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown/skills/skill-creator/scripts/run_loop.py", line 202, in run_loop
+    new_description = improve_description(
+  File "/home/bento/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown/skills/skill-creator/scripts/improve_description.py", line 114, in improve_description
+    response = client.messages.create(
+  File "/home/bento/.local/lib/python3.10/site-packages/anthropic/_utils/_utils.py", line 294, in wrapper
+    return func(*args, **kwargs)
+  File "/home/bento/.local/lib/python3.10/site-packages/anthropic/resources/messages/messages.py", line 1003, in create
+    return self._post(
+  File "/home/bento/.local/lib/python3.10/site-packages/anthropic/_base_client.py", line 1374, in post
+    return cast(ResponseT, self.request(cast_to, opts, stream=stream, stream_cls=stream_cls))
+  File "/home/bento/.local/lib/python3.10/site-packages/anthropic/_base_client.py", line 1064, in request
+    request = self._build_request(options, retries_taken=retries_taken)
+  File "/home/bento/.local/lib/python3.10/site-packages/anthropic/_base_client.py", line 522, in _build_request
+    headers = self._build_headers(options, retries_taken=retries_taken)
+  File "/home/bento/.local/lib/python3.10/site-packages/anthropic/_base_client.py", line 452, in _build_headers
+    self._validate_headers(headers_dict, custom_headers)
+  File "/home/bento/.local/lib/python3.10/site-packages/anthropic/_client.py", line 385, in _validate_headers
+    raise TypeError(
+TypeError: "Could not resolve authentication method. Expected one of api_key, auth_token, or credentials to be set. Or for one of the `X-Api-Key` or `Authorization` headers to be explicitly omitted"

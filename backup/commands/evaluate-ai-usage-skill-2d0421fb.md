@@ -1,0 +1,8 @@
+---
+description: |
+  Coach the user on getting more out of Claude Code. Use whenever the user asks how to be more productive with AI, wants their AI usage reviewed (current session or historical), asks "am I doing this right" / "is there a better way" / "how could I have used Claude better", or invokes /evaluate-ai-usage. Also consult the rubric in this skill before flagging an inline coaching moment so the nudge is grounded in a concrete dimension, not a vibe.
+---
+
+# evaluate-ai-usage
+
+This skill handles: Coach the user on getting more out of Claude Code. Use whenever the user asks how to be more productive with AI, wants their AI usage reviewed (current session or historical), asks "am I doing this right" / "is there a better way" / "how could I have used Claude better", or invokes /evaluate-ai-usage. Also consult the rubric in this skill before flagging an inline coaching moment so the nudge is grounded in a concrete dimension, not a vibe.

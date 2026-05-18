@@ -1,6 +1,6 @@
 ---
 name: daily-update
-description: Use when Joyce wants to draft her daily standup post for #team-partnership-experience-internal. Triggers on phrases like "draft daily update", "draft my standup", "write my standup", "/daily-update", "what should I post for standup", or any morning ask for a Yesterday/Today/Blocker post. Gathers candidates from Jira (CXP), recent carrot commits/PRs, Slack activity, Monday priority post, and local Claude/Glean usage; presents candidates per section for Joyce to check off; assembles the draft in her voice; DMs it via Slackbot for final review before she posts.
+description: 'Use when Joyce wants to draft her daily standup post for #team-partnership-experience-internal. Triggers on phrases like "draft daily update", "draft my standup", "write my standup", "/daily-update", "what should I post for standup", or any morning ask for a Yesterday/Today/Blocker post. Gathers candidates from Jira (CXP), recent carrot commits/PRs, Slack activity, Monday priority post, and local Claude/Glean usage; presents candidates per section for Joyce to check off; assembles the draft in her voice; DMs it via Slackbot for final review before she posts.'
 ---
 
 # daily-update

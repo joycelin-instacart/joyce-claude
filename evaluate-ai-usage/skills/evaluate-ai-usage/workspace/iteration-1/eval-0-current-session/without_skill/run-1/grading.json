@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "text": "Output includes a scorecard table covering at least 5 of the 7 rubric dimensions",
+      "passed": false,
+      "evidence": "No scorecard table; output is numbered prose sections instead"
+    },
+    {
+      "text": "Output includes an overall score with a level label",
+      "passed": false,
+      "evidence": "No overall score, no level label"
+    },
+    {
+      "text": "Output explicitly flags the 'add validation' prompt (msg 1) as too vague and references it concretely",
+      "passed": true,
+      "evidence": "Section 1: 'Your first three messages were add validation \u2192 to the signup form \u2192 yes. That's three round trips'"
+    },
+    {
+      "text": "Output flags that /pr:create or /create-pr was not used for the PR step (msg 5)",
+      "passed": true,
+      "evidence": "Section 3 lists /create-pr, /commit-and-push, pr:create as alternatives"
+    },
+    {
+      "text": "Output has at most 3 next moves",
+      "passed": false,
+      "evidence": "5 numbered findings, not capped at 3"
+    },
+    {
+      "text": "Output ends with a single 'one thing to internalize' line",
+      "passed": false,
+      "evidence": "'What to practice next' is two paragraphs, not a single internalizable line"
+    },
+    {
+      "text": "Each scoring note and recommendation references a specific message/moment from the transcript",
+      "passed": true,
+      "evidence": "References msg 1-4 with concrete quotes"
+    },
+    {
+      "text": "Tone is direct without 'great job', emojis, or apologetic padding",
+      "passed": false,
+      "evidence": "Has filler like 'You said thanks at the end. Doesn't matter to Claude, but it's a nice habit.' which is exactly the manufacture-an-affirmation pattern the skill prohibits"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 5,
+    "total": 8,
+    "pass_rate": 0.375
+  }
+}

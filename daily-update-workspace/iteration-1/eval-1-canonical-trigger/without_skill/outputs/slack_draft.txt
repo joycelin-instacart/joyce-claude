@@ -1,0 +1,13 @@
+Y:
+• Peacock payment-method gate — added `partnerships_peacock_pm_gate_enabled` FV, new `PaymentMethodRequired` EligibilityStatus, gated redemption, error-string render, integration spec, CI fix (6 commits)
+• NYT — landed new API-redemption modal/header images at 1x and 3x
+• Peacock-distributed IC+ users: verified they don't see the Peacock offer (PR https://github.com/instacart/carrot/pull/791828)
+• EPP placement for NYT storefront banner — PR up https://github.com/instacart/carrot/pull/791195
+• Sanity-checked NYTC activation flow (iOS/Android) with Priyanka for user-flow deck
+T:
+• Get Peacock PM gate PRs reviewed + merged
+• Land NYT EPP placement PR
+• Mandatory Snowflake Continu training
+• Monitor GH+ FD floating-cart expy
+B:
+• None

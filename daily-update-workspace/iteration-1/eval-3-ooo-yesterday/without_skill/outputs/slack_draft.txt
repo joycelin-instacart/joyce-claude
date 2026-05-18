@@ -1,0 +1,6 @@
+Y:
+- OOO Friday
+T:
+- Peacock redemption eligibility: add payment-method-required gate (https://github.com/instacart/carrot/pull/792845) — landing rules around `valid_payment_method?` (any non-expired CC on file vs. specific `credit_card_id` in params)
+- Follow up on NYT modal image PRs from last week (https://github.com/instacart/carrot/pull/792812, https://github.com/instacart/carrot/pull/792815)
+- Get review/merge on NYT EPP outbound offer card asset constant (https://github.com/instacart/carrot/pull/791195)

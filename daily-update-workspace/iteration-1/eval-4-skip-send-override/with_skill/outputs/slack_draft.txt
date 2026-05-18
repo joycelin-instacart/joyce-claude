@@ -1,0 +1,12 @@
+Y:
+• EI FD discount policy cutover. Verified FD still works in Grubhub
+• Expy setup for GH+ FD Floating cart message (<https://roulette.instacart.tools/expy/production/partnerships_grubhub_plus_fd_campaign?viewDim=all%3A+all&aggType=cumulative&sortOrder=key_metrics&impactType=weekly&cohortType=cumulative&metricsViewMode=classic&compactColumns=relLift%7CpValue|expy>)
+• NYT new flyout update (<https://github.com/instacart/carrot/pull/792206|PR>)
+• Mandatory Snowflake Continu training
+• Peacock-distributed IC+ benefit suppression — landed code, prod testing (<https://github.com/instacart/carrot/pull/791828|PR>, <https://instacart.atlassian.net/browse/CXP-210557|CXP-210557>)
+T:
+• Testing Peacock-distributed IC+ users do not see Peacock offer (<https://github.com/instacart/carrot/pull/791828|PR>)
+• Create EPP placements for NYT storefront banner
+• Peacock redemption payment gate (<https://github.com/instacart/carrot/pull/792845|PR>, <https://instacart.atlassian.net/browse/CXP-211150|CXP-211150>)
+• NYT modal image swap (<https://github.com/instacart/carrot/pull/792812|images>, <https://github.com/instacart/carrot/pull/792815|swap>)
+• Peacock World Cup readiness (June 11)

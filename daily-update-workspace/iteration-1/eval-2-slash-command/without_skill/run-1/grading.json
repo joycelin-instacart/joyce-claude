@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "slash form triggered the same pipeline as 'draft daily update'",
+      "passed": false,
+      "evidence": "drafted in Y/T format with multi-source trace"
+    },
+    {
+      "text": "draft uses Y:/T: abbreviations",
+      "passed": false,
+      "evidence": ""
+    },
+    {
+      "text": "draft uses \u2022 / \u25e6 bullets",
+      "passed": false,
+      "evidence": ""
+    },
+    {
+      "text": "B: only present with real blockers",
+      "passed": true,
+      "evidence": ""
+    },
+    {
+      "text": "Y section has \u22652 real items",
+      "passed": false,
+      "evidence": ""
+    },
+    {
+      "text": "T section has \u22652 real items",
+      "passed": false,
+      "evidence": ""
+    },
+    {
+      "text": "no fabricated links/IDs",
+      "passed": true,
+      "evidence": "manual check"
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 5,
+    "total": 7,
+    "pass_rate": 0.2857142857142857
+  }
+}

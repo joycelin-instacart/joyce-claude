@@ -1,0 +1,30 @@
+{
+  "expectations": [
+    {
+      "text": "Y section is sparse (\u22642 items) or notes OOO explicitly \u2014 does NOT pad with fabricated items",
+      "passed": true,
+      "evidence": ""
+    },
+    {
+      "text": "T section is still populated normally with \u22652 items",
+      "passed": true,
+      "evidence": ""
+    },
+    {
+      "text": "format still matches Y:/T: style with \u2022 bullets",
+      "passed": false,
+      "evidence": ""
+    },
+    {
+      "text": "no fabricated activity claimed in Y section",
+      "passed": true,
+      "evidence": "manual check"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 1,
+    "total": 4,
+    "pass_rate": 0.75
+  }
+}

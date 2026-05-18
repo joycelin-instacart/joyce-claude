@@ -1,0 +1,13 @@
+Y:
+• [CXP-211150] Drafted Peacock payment-method-required gate for World Cup 2026 trial-abuse mitigation (https://github.com/instacart/carrot/pull/792845) — new EligibilityStatus value, Roulette flag, service-level gate, view error copy, integration spec
+• [CXP-211002] NYT outbound flyout new design merged (https://github.com/instacart/carrot/pull/792206)
+• NYT API-redemption modal image assets (1x/3x + header swap) — https://github.com/instacart/carrot/pull/792812, https://github.com/instacart/carrot/pull/792815
+• Peacock-distributed IC+ exclusion testing + merge (https://github.com/instacart/carrot/pull/791828)
+• Mandatory Snowflake Continu training
+T:
+• Land [CXP-211150] Peacock PM gate — get reviews, set up Roulette flag off by default, staging smoke test, plan ramp ahead of June 11 hard launch
+• Create EPP placements for NYT storefront banner
+• NYT outbound offer card asset constant follow-up (https://github.com/instacart/carrot/pull/791195)
+• On-call coverage (newly added to rotation)
+B:
+• None

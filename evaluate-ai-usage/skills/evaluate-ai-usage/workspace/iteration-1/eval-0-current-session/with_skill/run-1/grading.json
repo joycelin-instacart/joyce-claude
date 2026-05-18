@@ -1,0 +1,50 @@
+{
+  "expectations": [
+    {
+      "text": "Output includes a scorecard table covering at least 5 of the 7 rubric dimensions",
+      "passed": true,
+      "evidence": "Markdown table with all 7 dimensions, each scored X/5"
+    },
+    {
+      "text": "Output includes an overall score with a level label",
+      "passed": true,
+      "evidence": "'Overall: 2.6 / 5 \u2014 Directed'"
+    },
+    {
+      "text": "Output explicitly flags the 'add validation' prompt (msg 1) as too vague and references it concretely",
+      "passed": true,
+      "evidence": "Dim 1 note: 'Msgs 1 & 2: \"add validation\" \u2192 \"to the signup form\" burned two turns'"
+    },
+    {
+      "text": "Output flags that /pr:create or /create-pr was not used for the PR step (msg 5)",
+      "passed": true,
+      "evidence": "Dim 2: 'Claude hand-rolled the description... /pr:create (or /create-pr) is built exactly for this'"
+    },
+    {
+      "text": "Output has at most 3 next moves",
+      "passed": true,
+      "evidence": "Exactly 3 numbered next moves"
+    },
+    {
+      "text": "Output ends with a single 'one thing to internalize' line",
+      "passed": true,
+      "evidence": "'### One thing to internalize this week' with a single-sentence rule"
+    },
+    {
+      "text": "Each scoring note and recommendation references a specific message/moment from the transcript",
+      "passed": true,
+      "evidence": "Every dimension and recommendation cites msg numbers (1, 2, 3, 4, 5, 6) and concrete quotes"
+    },
+    {
+      "text": "Tone is direct without 'great job', emojis, or apologetic padding",
+      "passed": true,
+      "evidence": "No padding; affirmation is one sentence; no emoji"
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1.0
+  }
+}

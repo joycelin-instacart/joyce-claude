@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "Output is short (no full 7-dimension scorecard table)",
+      "passed": true,
+      "evidence": "Short, no scorecard"
+    },
+    {
+      "text": "Output flags that the 3 file reads could have been parallel",
+      "passed": true,
+      "evidence": "Move 1: 'Batch the file reads into one turn... Claude will parallelize'"
+    },
+    {
+      "text": "Output mentions joyce-code-review or /pr:review as the better path for manual diff review",
+      "passed": false,
+      "evidence": "Says 'The manual diff review is good \u2014 keep it, but sharpen it' \u2014 misses the available skill entirely"
+    },
+    {
+      "text": "Output mentions /pr:create or /create-pr for the PR step",
+      "passed": false,
+      "evidence": "'PR creation is fine as a final step \u2014 no change needed there' \u2014 explicitly misses the skill"
+    },
+    {
+      "text": "At least one nudge uses inline format",
+      "passed": false,
+      "evidence": "Numbered list format, no soft opener"
+    },
+    {
+      "text": "Output is tactical without lecturing or restating the rubric",
+      "passed": true,
+      "evidence": "Tactical, no lecture"
+    },
+    {
+      "text": "Each suggestion is a concrete action",
+      "passed": true,
+      "evidence": "Concrete tactics but not skill-specific"
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 3,
+    "total": 7,
+    "pass_rate": 0.5714
+  }
+}

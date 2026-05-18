@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "Output shows evidence of actually reading JSONL transcript files from ~/.claude/projects/",
+      "passed": true,
+      "evidence": "Cites specific file paths, session IDs (2b512c2b, 99ee744a, c056af57, 6cbdf77e), specific quotes from messages"
+    },
+    {
+      "text": "Output covers at least 3 distinct conversations",
+      "passed": true,
+      "evidence": "Files referenced section lists 8 conversations"
+    },
+    {
+      "text": "Output includes a 'patterns across conversations' section",
+      "passed": true,
+      "evidence": "'Patterns I see across the 8 conversations' section with 6 numbered patterns"
+    },
+    {
+      "text": "Output includes a scorecard table covering at least 5 of the 7 rubric dimensions",
+      "passed": true,
+      "evidence": "7-row scorecard table (though dimensions are different from the skill's rubric \u2014 uses ad-hoc dimensions like 'Use of tutor me framing')"
+    },
+    {
+      "text": "Output has at most 3 prioritized next moves",
+      "passed": true,
+      "evidence": "Exactly 2 main next moves ('#1', '#2')"
+    },
+    {
+      "text": "Recommendations reference concrete moments/quotes from conversations",
+      "passed": true,
+      "evidence": "Quotes verbatim user messages, cites tool-call counts, references specific conversations by session ID"
+    },
+    {
+      "text": "Tone is honest and direct, no padding",
+      "passed": true,
+      "evidence": "Opens by flagging date mismatch (~3 weeks not 1 week); direct grades; minimal padding"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1.0
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "eval_id": 0,
+  "eval_name": "current-session-review",
+  "prompt": "Below is a transcript from a Claude Code session I just wrapped up. Review my AI usage and tell me what to work on.\n\n---\n\n**Me (msg 1):** add validation\n\n**Claude:** I'd be happy to help! Could you tell me where you'd like to add validation and what you'd like to validate?\n\n**Me (msg 2):** to the signup form\n\n**Claude:** Got it. I'll look at the signup form. *[reads app/forms/signup_form.rb]* I see it currently has password validation. Should I add email format validation as well?\n\n**Me (msg 3):** yes\n\n**Claude:** *[implements email validation following the existing password pattern, writes tests, runs them — all pass]* Done. Added EmailValidator to SignupForm following the same pattern as PasswordValidator. Tests pass.\n\n**Me (msg 4):** also check if the user model needs the same\n\n**Claude:** *[reads user model, finds it has email validation already]* User model already has email format validation. No changes needed.\n\n**Me (msg 5):** ok now make a PR for it\n\n**Claude:** *[manually writes a PR description, runs git commands one at a time, creates the PR via gh CLI]*\n\n**Me (msg 6):** thx\n\n---\n\nWhat should I work on?",
+  "assertions": [
+    {"id": "scorecard_table", "text": "Output includes a scorecard table covering at least 5 of the 7 rubric dimensions"},
+    {"id": "overall_score", "text": "Output includes an overall score with a level label (Basic/Directed/Iterative/Evaluative/Orchestrative)"},
+    {"id": "flags_vague_prompt", "text": "Output explicitly flags the 'add validation' prompt (msg 1) as too vague and references it concretely"},
+    {"id": "flags_pr_skill", "text": "Output flags that /pr:create or /create-pr was not used for the PR step (msg 5)"},
+    {"id": "next_moves_cap", "text": "Output has at most 3 next moves (top 3 recommendations)"},
+    {"id": "one_thing_line", "text": "Output ends with a single 'one thing to internalize' line / weekly habit"},
+    {"id": "concrete_moments", "text": "Each scoring note and recommendation references a specific message/moment from the transcript, not abstract principles"},
+    {"id": "tone_direct", "text": "Tone is direct without 'great job', emojis, or apologetic padding"}
+  ]
+}

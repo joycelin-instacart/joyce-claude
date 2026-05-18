@@ -1,0 +1,17 @@
+{
+  "eval_id": 1,
+  "eval_name": "canonical-trigger",
+  "prompt": "draft daily update",
+  "assertions": [
+    {"text": "draft uses Y:/T: abbreviations (not 'Yesterday:'/'Today:')", "type": "format"},
+    {"text": "draft uses • for top-level bullets and ◦ for sub-bullets", "type": "format"},
+    {"text": "B: section is either omitted or only present with real blockers (matches Joyce's habit)", "type": "format"},
+    {"text": "no preamble like 'Here is your update' — output is the post itself", "type": "format"},
+    {"text": "links use Slack format <url|text> when present", "type": "format"},
+    {"text": "Y section has ≥2 items sourced from real activity (git/slack/jira/claude)", "type": "content"},
+    {"text": "T section has ≥2 items sourced from real activity or carryover", "type": "content"},
+    {"text": "no fabricated PR numbers, ticket IDs, or links — every link must verify", "type": "content"},
+    {"text": "skill queried ≥3 of the 5 yesterday-sources (jira, git, slack, claude transcripts, glean)", "type": "process"},
+    {"text": "skill queried the channel for Monday priority post or last standup carryover for T candidates", "type": "process"}
+  ]
+}

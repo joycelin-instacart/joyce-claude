@@ -42,6 +42,24 @@
       }
     },
     {
+      "name": "joyce-code-review",
+      "source": "./joyce-code-review",
+      "description": "Review code in Joyce's voice — terse, scope-disciplined, Socratic, layer-aware. Use whenever the user asks for a review of code, a diff, or a PR; or invokes /joyce-review, /jreview, or says things like \"review what you wrote\", \"what would you change\", \"give me a code review\", \"review this PR\", \"look this over before I commit\". Default to this skill for any review request in Joyce's repos rather than a generic review.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Joyce Lin"
+      }
+    },
+    {
+      "name": "evaluate-ai-usage",
+      "source": "./evaluate-ai-usage",
+      "description": "Coach the user on getting more out of Claude Code. Use whenever the user asks how to be more productive with AI, wants their AI usage reviewed (current session or historical), asks \"am I doing this right\" / \"is there a better way\" / \"how could I have used Claude better\", or invokes /evaluate-ai-usage. Also consult the rubric in this skill before flagging an inline coaching moment so the nudge is grounded in a concrete dimension, not a vibe.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Joyce Lin"
+      }
+    },
+    {
       "name": "create-pr",
       "source": "./create-pr",
       "description": "Use when the user wants to commit current changes and open a pull request in one step, or invokes /create-pr",
@@ -54,15 +72,6 @@
       "name": "find-skill-candidates",
       "source": "./find-skill-candidates",
       "description": "Use when the user wants to analyze their Claude Code prompt history to find recurring asks that could be automated into skills. Triggers on phrases like \"find skill candidates\", \"what should I automate?\", \"analyze my prompts\", \"are there skills I should create?\", \"look at my recent Claude usage and suggest skills\", or \"/find-skill-candidates\". Surfaces clusters of semantically similar prompts, dedupes against skills/commands the user already has, and offers to hand each accepted candidate off to skill-creator with a pre-filled brief.",
-      "version": "1.0.0",
-      "author": {
-        "name": "Joyce Lin"
-      }
-    },
-    {
-      "name": "daily-update",
-      "source": "./daily-update",
-      "description": "Use when Joyce wants to draft her daily standup post for #team-partnership-experience-internal. Triggers on phrases like \"draft daily update\", \"draft my standup\", \"write my standup\", \"/daily-update\", \"what should I post for standup\", or any morning ask for a Yesterday/Today/Blocker post. Gathers candidates from Jira (CXP), recent carrot commits/PRs, Slack activity, Monday priority post, and local Claude/Glean usage; presents candidates per section for Joyce to check off; assembles the draft in her voice; DMs it via Slackbot for final review before she posts.",
       "version": "1.0.0",
       "author": {
         "name": "Joyce Lin"

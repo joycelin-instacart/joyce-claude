@@ -1,0 +1,8 @@
+Y:
+• OOO
+T:
+• Testing to make sure that Peacock-distributed IC+ users do not see Peacock offer (<https://github.com/instacart/carrot/pull/791828|PR>)
+• Create EPP placements for NYT storefront banner
+• Mandatory Snowflake Continu training
+• <https://instacart.atlassian.net/browse/CXP-210350|CXP-210350> floating cart MC credit copy fix ("2nd order" → "next order")
+• Peacock World Cup readiness — follow up on CRM attribute for messaging suppression, spin up project channel

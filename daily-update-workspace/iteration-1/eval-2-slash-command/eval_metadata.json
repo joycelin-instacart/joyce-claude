@@ -1,0 +1,14 @@
+{
+  "eval_id": 2,
+  "eval_name": "slash-command",
+  "prompt": "/daily-update",
+  "assertions": [
+    {"text": "slash form triggered the same pipeline as 'draft daily update'", "type": "process"},
+    {"text": "draft uses Y:/T: abbreviations", "type": "format"},
+    {"text": "draft uses • / ◦ bullets", "type": "format"},
+    {"text": "B: only present with real blockers", "type": "format"},
+    {"text": "Y section has ≥2 real items", "type": "content"},
+    {"text": "T section has ≥2 real items", "type": "content"},
+    {"text": "no fabricated links/IDs", "type": "content"}
+  ]
+}

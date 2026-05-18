@@ -1,0 +1,45 @@
+{
+  "expectations": [
+    {
+      "text": "Output is short (no full 7-dimension scorecard table)",
+      "passed": true,
+      "evidence": "~12 lines, no scorecard table"
+    },
+    {
+      "text": "Output flags that the 3 file reads could have been parallel",
+      "passed": true,
+      "evidence": "Move 1: 'Read the three files in parallel, not serial... one message with three Read calls'"
+    },
+    {
+      "text": "Output mentions joyce-code-review or /pr:review as the better path for manual diff review",
+      "passed": true,
+      "evidence": "Move 2: '/pr:review (or joyce-code-review) instead of manual diff review'"
+    },
+    {
+      "text": "Output mentions /pr:create or /create-pr for the PR step",
+      "passed": true,
+      "evidence": "Move 3: '/pr:create collapses the last two steps'"
+    },
+    {
+      "text": "At least one nudge uses inline format (soft opener, specific moment, productivity reason)",
+      "passed": false,
+      "evidence": "Uses numbered tactical-list format rather than 'btw \u2014' style nudges; format is review-mode-lite. Tactical and short, but not literally inline-nudge format"
+    },
+    {
+      "text": "Output is tactical without lecturing or restating the rubric",
+      "passed": true,
+      "evidence": "No rubric mention; no lecture; each move is one paragraph"
+    },
+    {
+      "text": "Each suggestion is a concrete action (specific skill, specific pattern)",
+      "passed": true,
+      "evidence": "Every move names a specific skill (/pr:review, joyce-code-review, /pr:create, Explore) or pattern (parallel reads)"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.8571
+  }
+}

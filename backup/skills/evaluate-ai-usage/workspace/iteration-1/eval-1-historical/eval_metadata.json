@@ -1,0 +1,14 @@
+{
+  "eval_id": 1,
+  "eval_name": "historical-review",
+  "prompt": "Take a look at my Claude Code conversations from the last week or so and give me a real read on how I'm doing. I want the scorecard, the patterns you see across conversations, and the 1-2 things that would actually move the needle if I changed them. Be honest, not flattering.",
+  "assertions": [
+    {"id": "reads_jsonl", "text": "Output shows evidence of actually reading JSONL transcript files from ~/.claude/projects/, not generic recommendations"},
+    {"id": "samples_multiple", "text": "Output covers at least 3 distinct conversations (cites them or references them)"},
+    {"id": "patterns_across_section", "text": "Output includes a 'patterns across conversations' section identifying repeated behaviors"},
+    {"id": "scorecard_table", "text": "Output includes a scorecard table covering at least 5 of the 7 rubric dimensions"},
+    {"id": "top_moves_capped", "text": "Output has at most 3 prioritized next moves"},
+    {"id": "concrete_evidence", "text": "Recommendations reference concrete moments/quotes from conversations, not abstract advice"},
+    {"id": "tone_honest", "text": "Tone is honest and direct (matches 'be honest not flattering' ask), no padding"}
+  ]
+}

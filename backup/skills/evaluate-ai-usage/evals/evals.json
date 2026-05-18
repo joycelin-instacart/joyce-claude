@@ -1,0 +1,23 @@
+{
+  "skill_name": "evaluate-ai-usage",
+  "evals": [
+    {
+      "id": 0,
+      "name": "current-session-review",
+      "prompt": "Below is a transcript from a Claude Code session I just wrapped up. Review my AI usage and tell me what to work on.\n\n---\n\n**Me (msg 1):** add validation\n\n**Claude:** I'd be happy to help! Could you tell me where you'd like to add validation and what you'd like to validate?\n\n**Me (msg 2):** to the signup form\n\n**Claude:** Got it. I'll look at the signup form. *[reads app/forms/signup_form.rb]* I see it currently has password validation. Should I add email format validation as well?\n\n**Me (msg 3):** yes\n\n**Claude:** *[implements email validation following the existing password pattern, writes tests, runs them — all pass]* Done. Added EmailValidator to SignupForm following the same pattern as PasswordValidator. Tests pass.\n\n**Me (msg 4):** also check if the user model needs the same\n\n**Claude:** *[reads user model, finds it has email validation already]* User model already has email format validation. No changes needed.\n\n**Me (msg 5):** ok now make a PR for it\n\n**Claude:** *[manually writes a PR description, runs git commands one at a time, creates the PR via gh CLI]*\n\n**Me (msg 6):** thx\n\n---\n\nWhat should I work on?",
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "historical-review",
+      "prompt": "Take a look at my Claude Code conversations from the last week or so and give me a real read on how I'm doing. I want the scorecard, the patterns you see across conversations, and the 1-2 things that would actually move the needle if I changed them. Be honest, not flattering.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "inline-coaching-trigger",
+      "prompt": "I just finished implementing a feature — I asked Claude to look at three files one after another (orchestrator.rb, then service.rb, then api.rb), then I asked it to write tests, then I asked it to review the diff manually, then I asked it to make a PR. Everything works. But — anything I could have done better in how I drove the session? Keep it short and tactical, not a lecture.",
+      "files": []
+    }
+  ]
+}

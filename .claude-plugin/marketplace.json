@@ -60,6 +60,15 @@
       }
     },
     {
+      "name": "daily-update",
+      "source": "./daily-update",
+      "description": "Use when Joyce wants to draft her daily standup post for",
+      "version": "1.0.0",
+      "author": {
+        "name": "Joyce Lin"
+      }
+    },
+    {
       "name": "create-pr",
       "source": "./create-pr",
       "description": "Use when the user wants to commit current changes and open a pull request in one step, or invokes /create-pr",

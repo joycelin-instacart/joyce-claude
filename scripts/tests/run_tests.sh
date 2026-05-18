@@ -116,6 +116,36 @@ test_unmatched_command_warns() {
 }
 run_test "unmatched command warns" test_unmatched_command_warns
 
+test_marketplace_json_lists_plugins() {
+  add_skill foo "foo desc"
+  add_skill bar "bar desc"
+  bash "$ROOT/sync.sh"
+  local mp="$STACK_REPO/.claude-plugin/marketplace.json"
+  [[ -f "$mp" ]] || { echo "missing marketplace.json"; return 1; }
+  local names
+  names=$(jq -r '.plugins[].name' "$mp" | sort | tr '\n' ',')
+  [[ "$names" == "bar,foo," ]] || { echo "wrong plugin list: $names"; return 1; }
+  local name desc src
+  src=$(jq -r '.plugins[] | select(.name == "foo") | .source' "$mp")
+  desc=$(jq -r '.plugins[] | select(.name == "foo") | .description' "$mp")
+  [[ "$src" == "./foo" ]] || { echo "wrong source for foo: $src"; return 1; }
+  [[ "$desc" == "foo desc" ]] || { echo "wrong desc for foo: $desc"; return 1; }
+}
+run_test "marketplace.json lists plugins" test_marketplace_json_lists_plugins
+
+test_marketplace_json_drops_deleted() {
+  add_skill foo
+  add_skill bar
+  bash "$ROOT/sync.sh"
+  rm -rf "$CLAUDE_HOME/skills/bar"
+  rm -f "$STATE_FILE"
+  bash "$ROOT/sync.sh"
+  local names
+  names=$(jq -r '.plugins[].name' "$STACK_REPO/.claude-plugin/marketplace.json" | sort | tr '\n' ',')
+  [[ "$names" == "foo," ]] || { echo "deleted plugin still in marketplace.json: $names"; return 1; }
+}
+run_test "marketplace.json drops deleted" test_marketplace_json_drops_deleted
+
 # --- end test cases ---
 
 echo

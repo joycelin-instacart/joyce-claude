@@ -114,5 +114,32 @@ if [[ -d "$CLAUDE_HOME/commands" ]]; then
   done < <(find "$CLAUDE_HOME/commands" -mindepth 1 -maxdepth 1 -type f -name '*.md' -print0)
 fi
 
+# --- regenerate marketplace.json ---
+mkdir -p "$STACK_REPO/.claude-plugin"
+mp_tmp="$(mktemp)"
+
+# Build the plugins array from existing plugin folders
+plugins_json="[]"
+while IFS= read -r -d '' pj; do
+  plugin_dir="$(dirname "$(dirname "$pj")")"
+  plugin_name="$(basename "$plugin_dir")"
+  entry=$(jq -c \
+    --arg name "$plugin_name" \
+    --arg source "./$plugin_name" \
+    --arg author "Joyce Lin" \
+    '{name: $name, source: $source, description: .description, version: .version, author: {name: $author}}' \
+    "$pj")
+  plugins_json=$(echo "$plugins_json" | jq -c --argjson e "$entry" '. + [$e]')
+done < <(find "$STACK_REPO" -mindepth 3 -maxdepth 3 -name plugin.json -path '*/.claude-plugin/*' -print0)
+
+jq -n \
+  --arg name "joyce-claude" \
+  --arg desc "Joyce's personal Claude skills and plugins" \
+  --argjson plugins "$plugins_json" \
+  '{name: $name, description: $desc, owner: {name: "Joyce Lin"}, plugins: $plugins}' \
+  > "$mp_tmp"
+
+mv "$mp_tmp" "$STACK_REPO/.claude-plugin/marketplace.json"
+
 touch "$STATE_FILE"
 log "sync complete"

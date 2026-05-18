@@ -1,0 +1,1 @@
+{"name": "commit-and-push", "description": "Use when the user wants to review changes, commit with a conventional commit message, and push to the current branch, or invokes /commit-and-push", "version": "1.0.0"}

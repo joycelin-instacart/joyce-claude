@@ -73,9 +73,9 @@ for name in "${personal_skills[@]}"; do
   # Mirror skill content into the plugin folder
   rsync -a --delete "$CLAUDE_HOME/skills/$name/" "$plugin_dir/skills/$name/"
 
-  # Scaffold plugin.json if missing (preserves any hand-edited version on subsequent runs)
+  # Scaffold plugin.json if missing or empty/invalid (preserves hand-edited versions once valid)
   pj="$plugin_dir/.claude-plugin/plugin.json"
-  if [[ ! -f "$pj" ]]; then
+  if [[ ! -f "$pj" ]] || ! jq -e . "$pj" > /dev/null 2>&1; then
     "$SCRIPT_DIR/parse_frontmatter.py" "$CLAUDE_HOME/skills/$name/SKILL.md" > "$pj"
   fi
 done

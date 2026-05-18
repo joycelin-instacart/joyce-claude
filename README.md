@@ -19,6 +19,7 @@ Then install individual plugins:
 /plugin install create-pr@joyce-claude
 /plugin install daniel@joyce-claude
 /plugin install find-skill-candidates@joyce-claude
+/plugin install daily-update@joyce-claude
 ```
 
 ## Plugins
@@ -31,6 +32,7 @@ Then install individual plugins:
 | `create-pr` | Commit current changes and open a pull request in one step. |
 | `daniel` | Multi-personality PR review pipeline (Daniel, Kye, Gilfoyle, Repo Practices). |
 | `find-skill-candidates` | Mine prompt history for recurring asks that could be automated into skills. |
+| `daily-update` | Draft Joyce's daily standup post — pulls candidates from Jira, git, Slack, and Claude usage, then DMs the assembled draft via Slackbot. |
 
 ## Backup
 

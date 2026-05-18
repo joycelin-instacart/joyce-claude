@@ -5,3 +5,13 @@
 # Editor scratch
 .DS_Store
 *.swp
+
+# Eval prompts and test outputs — regenerable, not part of plugin distribution
+**/evals/
+*-workspace/
+eval-workspaces/
+**/workspace/
+**/iteration-*/
+
+# Stale snapshot from earlier sync runs
+backup/

@@ -35,6 +35,34 @@ test_noop_on_unchanged() {
 }
 run_test "noop on unchanged" test_noop_on_unchanged
 
+test_backup_mirrors_skills() {
+  add_skill foo "foo desc"
+  add_skill bar "bar desc"
+  bash "$ROOT/sync.sh"
+  [[ -f "$STACK_REPO/backup/skills/foo/SKILL.md" ]] || { echo "missing foo SKILL.md in backup"; return 1; }
+  [[ -f "$STACK_REPO/backup/skills/bar/SKILL.md" ]] || { echo "missing bar SKILL.md in backup"; return 1; }
+}
+run_test "backup mirrors skills" test_backup_mirrors_skills
+
+test_backup_mirrors_commands() {
+  add_skill foo
+  add_command foo
+  bash "$ROOT/sync.sh"
+  [[ -f "$STACK_REPO/backup/commands/foo.md" ]] || { echo "missing foo.md in backup"; return 1; }
+}
+run_test "backup mirrors commands" test_backup_mirrors_commands
+
+test_backup_drops_deleted_skill() {
+  add_skill foo
+  add_skill bar
+  bash "$ROOT/sync.sh"
+  rm -rf "$CLAUDE_HOME/skills/bar"
+  touch "$STATE_FILE"; rm -f "$STATE_FILE"   # force re-run
+  bash "$ROOT/sync.sh"
+  [[ ! -d "$STACK_REPO/backup/skills/bar" ]] || { echo "deleted skill 'bar' still in backup"; return 1; }
+}
+run_test "backup drops deleted skill" test_backup_drops_deleted_skill
+
 # --- end test cases ---
 
 echo

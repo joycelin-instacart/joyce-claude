@@ -29,7 +29,41 @@ fi
 
 log "sync starting"
 
-# (Subsequent tasks fill in the actual work here)
+# --- enumerate personal skills ---
+# Everything in $CLAUDE_HOME/skills/ is personal (marketplace-installed skills
+# live under ~/.claude/plugins/cache/, not here).
+personal_skills=()
+if [[ -d "$CLAUDE_HOME/skills" ]]; then
+  while IFS= read -r -d '' dir; do
+    personal_skills+=("$(basename "$dir")")
+  done < <(find "$CLAUDE_HOME/skills" -mindepth 1 -maxdepth 1 -type d -print0)
+fi
+
+# --- backup mirror ---
+mkdir -p "$STACK_REPO/backup/skills" "$STACK_REPO/backup/commands"
+
+# Sync each personal skill into backup (with --delete to handle removals).
+# Then prune backup/skills/ entries that no longer exist in CLAUDE_HOME.
+for name in "${personal_skills[@]}"; do
+  rsync -a --delete "$CLAUDE_HOME/skills/$name/" "$STACK_REPO/backup/skills/$name/"
+done
+
+# Prune deleted skills from backup
+if [[ -d "$STACK_REPO/backup/skills" ]]; then
+  while IFS= read -r -d '' dir; do
+    name="$(basename "$dir")"
+    keep=0
+    for s in "${personal_skills[@]:-}"; do
+      [[ "$s" == "$name" ]] && { keep=1; break; }
+    done
+    (( keep == 0 )) && rm -rf "$dir"
+  done < <(find "$STACK_REPO/backup/skills" -mindepth 1 -maxdepth 1 -type d -print0)
+fi
+
+# Mirror commands (single rsync with --delete handles add/update/remove)
+if [[ -d "$CLAUDE_HOME/commands" ]]; then
+  rsync -a --delete "$CLAUDE_HOME/commands/" "$STACK_REPO/backup/commands/"
+fi
 
 touch "$STATE_FILE"
 log "sync complete"

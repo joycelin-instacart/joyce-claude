@@ -12,6 +12,8 @@ build_fixture() {
   export CLAUDE_HOME="$TMP_ROOT/claude"
   export STACK_REPO="$TMP_ROOT/repo"
 
+  export STATE_FILE="$STACK_REPO/.sync-state"
+
   mkdir -p "$CLAUDE_HOME/skills" "$CLAUDE_HOME/commands"
   mkdir -p "$STACK_REPO"
 

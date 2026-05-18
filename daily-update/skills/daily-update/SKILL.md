@@ -146,34 +146,60 @@ For each candidate, capture:
 
 ### 4. Present candidates for selection
 
-Show all three sections at once as numbered lists. Use plain markdown — AskUserQuestion caps at 4 options and a section often has more.
+Use `AskUserQuestion` with `multiSelect: true` so Joyce can tick checkboxes instead of typing back numbers. AskUserQuestion caps each question at 4 options, so split each section into multiple questions when it has more than 4 candidates. Send all the questions in a single AskUserQuestion call so they appear together. (If the total number of questions across all sections would exceed AskUserQuestion's per-call cap of 4, split across two AskUserQuestion calls — Y first, then T+B.)
 
-```markdown
-## Candidates — check off what to include
+**Per-section layout:**
+- Y candidates 1–4 → question with `header: "Yesterday"`
+- Y candidates 5–8 → question with `header: "Yesterday (cont.)"` — only if she has >4 candidates
+- T candidates 1–4 → question with `header: "Today"`
+- T candidates 5–8 → question with `header: "Today (cont.)"` — only if needed
+- B section: only ask if ≥1 blocker candidate surfaced. Otherwise omit the question entirely — matches her habit of dropping B: when there's nothing.
 
-### Yesterday (Y:)
-1. [jira CXP-210557] Peacock benefit suppression — landed code, testing in progress
-2. [git] Costco FD VGP cutover — merged PR #790123
-3. [slack] NYT prod testing
-4. [claude] Investigating Peacock IC+ exclusion logic
-...
+**Each option:**
+- `label`: the candidate phrased in Joyce's voice — short noun phrase, the way it would read in the final bullet (e.g., `"NYT outbound flyout new design"`).
+- `description`: source tag + the link/context she needs to judge it (e.g., `"[git+PR 792206] CXP-211002 — merged + cleanup commits under terms variant"`). This shows under the option in the UI and never makes it into the post.
 
-### Today (T:)
-1. [carryover] EI FD discount policy cutover
-2. [jira CXP-210600] NYT new flyout update
-3. [priority-post] Peacock World Cup readiness
-...
+**'Other' free-text is auto-added** by AskUserQuestion. That's how she adds anything missed — no separate prompt needed. Treat any non-empty 'Other' response as an additional selected item for that section, and rewrite it into her short noun-phrase style if she gave it verbosely.
 
-### Blocker (B:) — usually omit
-1. [slack] Waiting on Matt for Yoda backtest results
-(or: "none surfaced — recommend omitting B: section")
+**Edge case — fewer than 2 real candidates for a section:** AskUserQuestion requires a minimum of 2 options per question. If only 1 candidate surfaced for Y or T, add a literal `"None of these / I'll add via Other"` as the second option so she can still type an addition via 'Other'. If 0 candidates surfaced for Y or T, skip the structured question and ask her in plain text what to put there — having zero signals is itself worth flagging.
 
----
-Reply with which to include, e.g.:
-  Y: 1,2,3   T: 1,2   B: skip
+**Example call shape** (Y has 6 candidates, T has 3, B omitted):
+```
+AskUserQuestion(questions: [
+  {
+    question: "Yesterday (Y:) — pick what to include",
+    header: "Yesterday",
+    multiSelect: true,
+    options: [
+      { label: "NYT outbound flyout new design", description: "[git+PR 792206] CXP-211002 — merged + follow-up cleanup commits" },
+      { label: "Peacock IC+ benefit suppression testing", description: "[CXP-210557, PR 791828] landed Thu, tested Fri" },
+      { label: "Mandatory Snowflake Continu training", description: "[slack] mentioned in Friday's Y:" },
+      { label: "Peacock World Cup workstreams discussion w/ Rob", description: "[slack-thread] CRM suppression + payment-gating direction" }
+    ]
+  },
+  {
+    question: "Yesterday (cont.) — anything else?",
+    header: "Yesterday (cont.)",
+    multiSelect: true,
+    options: [
+      { label: "NYT modal images uploaded", description: "[weekend PRs 792812, 792815]" },
+      { label: "Peacock payment-method-required gate started", description: "[weekend PR 792845, CXP-211150]" }
+    ]
+  },
+  {
+    question: "Today (T:) — pick what to include",
+    header: "Today",
+    multiSelect: true,
+    options: [
+      { label: "Land Peacock payment-method-required gate", description: "[CXP-211150, PR 792845]" },
+      { label: "Get NYT modal image PRs merged", description: "[PRs 792812, 792815]" },
+      { label: "NYT EPP storefront banner placements", description: "[PR 791195]" }
+    ]
+  }
+])
 ```
 
-Wait for her response.
+Wait for her checkbox response before assembling the draft. Selected option labels + any 'Other' text become the items for that section in step 5.
 
 ### 5. Assemble the draft in her voice
 

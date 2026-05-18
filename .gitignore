@@ -1,0 +1,7 @@
+# Sync state — local-only, regenerated each run
+.sync-state
+.sync.log
+
+# Editor scratch
+.DS_Store
+*.swp

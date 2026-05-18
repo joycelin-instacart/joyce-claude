@@ -225,7 +225,7 @@ Use `mcp__slack__slack_send_message` to post to Slackbot:
 
 ```
 channel_id: USLACKBOT
-text: <the assembled draft, formatted exactly as above>
+message: <the assembled draft, formatted exactly as above>
 ```
 
 If sending to `USLACKBOT` fails for any reason, fall back to her own user-ID DM (`channel_id: U0AK8RMGWFR`) — Slack will route it to her self-DM.

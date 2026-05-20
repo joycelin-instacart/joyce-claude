@@ -1,6 +1,6 @@
 ---
 name: daily-update
-description: 'Use when Joyce wants to draft her daily standup post for #team-partnership-experience-internal. Triggers on phrases like "draft daily update", "draft my standup", "write my standup", "/daily-update", "what should I post for standup", or any morning ask for a Yesterday/Today/Blocker post. Gathers candidates from Jira (CXP), recent carrot commits/PRs, Slack activity, Monday priority post, and local Claude/Glean usage; presents candidates per section for Joyce to check off; assembles the draft in her voice; DMs it via Slackbot for final review before she posts.'
+description: 'Use when Joyce wants to draft her daily standup post for #team-partnership-experience-internal. Triggers on phrases like "draft daily update", "draft my standup", "write my standup", "/daily-update", "what should I post for standup", or any morning ask for a Yesterday/Today/Blocker post. Gathers candidates from Jira (CXP), recent carrot commits/PRs, Slack activity, Monday priority post, and local Claude/Glean usage; presents candidates per section for Joyce to check off; assembles the draft in her voice; shows it for confirmation; then posts it as a threaded reply under the day''s Slackbot standup prompt in #team-partnership-experience-internal (falling back to a Slackbot DM if no prompt is found).'
 ---
 
 # daily-update
@@ -217,24 +217,50 @@ B:    ← only include this section if she selected blockers
 • <blocker>
 ```
 
-Show the assembled draft in chat first so she can see it.
+Show the assembled draft in chat first so she can see it. **Do not send anything yet** — wait for an explicit go-ahead in step 6.
 
-### 6. Send the draft to Slackbot DM
+### 6. Confirm, then post as a threaded reply to today's Slackbot standup prompt
 
-Use `mcp__slack__slack_send_message` to post to Slackbot:
+Posting goes to a public channel, so the draft must be confirmed before it sends.
+
+**6a. Get confirmation.** After showing the draft, ask in plain text: "Post this as a reply in the standup thread?" Wait for an affirmative response ("yes", "send it", "looks good", "ship it", etc.). If Joyce asks for edits, revise the draft inline and ask again. Do **not** proceed to 6b without a clear go-ahead.
+
+**6b. Find today's Slackbot standup prompt.** Read recent messages from #team-partnership-experience-internal posted today (Joyce's TZ, `America/New_York`):
 
 ```
-channel_id: USLACKBOT
-message: <the assembled draft, formatted exactly as above>
+mcp__slack__slack_read_channel:
+  channel_id: C0880QWQ5K3
+  oldest: <today-00:00 epoch in America/New_York>
+  latest: <now epoch>
 ```
 
-If sending to `USLACKBOT` fails for any reason, fall back to her own user-ID DM (`channel_id: U0AK8RMGWFR`) — Slack will route it to her self-DM.
+From the returned messages, pick the most recent top-level post (no `thread_ts`, or `thread_ts == ts`) that came from Slackbot — typically `user == "USLACKBOT"` or `subtype == "bot_message"` with Slackbot as the author — whose text looks like a standup prompt (mentions "standup", "update", "Y:/T:", or similar). The `ts` of that message is the thread root.
 
-After sending, confirm in chat with a one-liner: "Draft sent to your Slackbot DM. Tweak there and post when ready."
+**6c. Post the reply.**
+
+```
+mcp__slack__slack_send_message:
+  channel_id: C0880QWQ5K3
+  thread_ts: <the standup post ts>
+  message: <the assembled draft, formatted exactly as in step 5>
+```
+
+After posting, confirm in chat with a one-liner: "Posted in the standup thread."
+
+**6d. Fallback — no Slackbot standup prompt found today.** If 6b returns no qualifying Slackbot post (weekend, holiday, bot didn't fire yet, etc.), do **not** post a top-level message in the channel. Send the draft to Joyce's Slackbot DM so she can post manually:
+
+```
+mcp__slack__slack_send_message:
+  channel_id: USLACKBOT
+  message: <the assembled draft>
+```
+
+If `USLACKBOT` fails, fall back to her self-DM (`channel_id: U0AK8RMGWFR`). Then confirm in chat: "No standup prompt found in #team-partnership-experience-internal today — sent the draft to your Slackbot DM instead so you can post when ready."
 
 ## Things to avoid
 
-- **Don't post directly to #team-partnership-experience-internal.** Drafts go to Joyce's Slackbot DM only — she reviews and posts manually.
+- **Don't post without explicit confirmation.** Show the assembled draft in chat (step 5), ask, and wait for a clear go-ahead before sending anything. Posting to a public channel is one-way — no undo.
+- **Don't post the draft as a top-level message in #team-partnership-experience-internal.** Always reply in-thread under that day's Slackbot standup prompt. If no Slackbot prompt is found for today, fall back to her Slackbot DM — never post to the channel root.
 - **Don't invent items.** Every candidate must trace to a real source (Jira, commit, Slack message, Claude transcript). If a source is empty, say so — don't pad.
 - **Don't include B: when there's nothing.** Match her actual habit of omitting it.
 - **Don't expand bullets with prose.** "Verified FD still works in Grubhub" not "Yesterday, I performed verification testing on the Free Delivery feature in the Grubhub integration to confirm continued functionality."

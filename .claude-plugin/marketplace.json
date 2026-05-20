@@ -42,6 +42,15 @@
       }
     },
     {
+      "name": "stacked-pr",
+      "source": "./stacked-pr",
+      "description": "Use when the user wants to split a branch into a stack of dependent PRs using plain git + gh (no Graphite/stax). Triggers on \"stacked PR\", \"stack this branch\", \"split this PR\", \"break into smaller PRs\", \"stack of PRs\", \"chain of PRs\", \"dependent PRs\", or anytime the user has work on one branch that should land as multiple reviewable slices. Use even if the user doesn't say \"stack\" explicitly — if they have a large branch and want it split into smaller reviewable PRs, this skill applies.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Joyce Lin"
+      }
+    },
+    {
       "name": "joyce-code-review",
       "source": "./joyce-code-review",
       "description": "Review code in Joyce's voice — terse, scope-disciplined, Socratic, layer-aware. Use whenever the user asks for a review of code, a diff, or a PR; or invokes /joyce-review, /jreview, or says things like \"review what you wrote\", \"what would you change\", \"give me a code review\", \"review this PR\", \"look this over before I commit\". Default to this skill for any review request in Joyce's repos rather than a generic review.",

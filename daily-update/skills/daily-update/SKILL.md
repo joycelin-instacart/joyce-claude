@@ -217,12 +217,19 @@ B:    ← only include this section if she selected blockers
 • <blocker>
 ```
 
-**Order bullets within each section by priority — most important first.** Do not preserve the AskUserQuestion option order (that's discovery order from git/Slack/Jira, not importance order). Rough heuristics:
+**Order bullets within each section by priority — most important first.** Do not preserve the AskUserQuestion option order (that's discovery order from git/Slack/Jira, not importance order).
+
+**Infer priority from real signals — don't guess.** Before assembling, look at:
+- **Jira priority** on the CXP ticket backing each candidate (Highest/High/Medium/Low). Pull via `mcp__glean__search` for the ticket key and check the priority field. P0/P1/Highest > P2/High > P3/Medium > P4/Low.
+- **Slack thread signals** — search recent threads in #team-partnership-experience-internal and adjacent project channels for each candidate. Strong signals: Rob/Richard explicitly asking for an update, a customer/partner deadline mentioned, words like "urgent", "blocker", "needed by", "EOW", or a thread with many recent replies. A candidate with active leadership attention outranks one with none.
+- **Recency of leadership ask** — a thread from Rob/Richard in the last 24h pinging her on item X bumps X to the top of T:.
+
+Combine these with the rough heuristics:
 - `Y:` — shipped/landed work first, then in-progress/iteration, then small one-offs
-- `T:` — must-do today first, then follow-ups, then nice-to-haves
+- `T:` — must-do today first (highest Jira priority + active leadership ask), then follow-ups, then nice-to-haves
 - `B:` — most blocking first
 
-If the priority isn't obvious from the candidates, ask her to confirm ordering when showing the draft ("ordered by priority — want to reshuffle?"). She'll often reorder herself if it's wrong.
+If signals are missing or ambiguous, show the draft with your best ordering and explicitly note: "ordered by [Jira priority / Slack signal / heuristic] — want to reshuffle?" so she can correct.
 
 Show the assembled draft in chat first so she can see it. **Do not send anything yet** — wait for an explicit go-ahead in step 6.
 

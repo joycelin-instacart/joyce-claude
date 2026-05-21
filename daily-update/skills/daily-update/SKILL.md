@@ -217,6 +217,13 @@ B:    ← only include this section if she selected blockers
 • <blocker>
 ```
 
+**Order bullets within each section by priority — most important first.** Do not preserve the AskUserQuestion option order (that's discovery order from git/Slack/Jira, not importance order). Rough heuristics:
+- `Y:` — shipped/landed work first, then in-progress/iteration, then small one-offs
+- `T:` — must-do today first, then follow-ups, then nice-to-haves
+- `B:` — most blocking first
+
+If the priority isn't obvious from the candidates, ask her to confirm ordering when showing the draft ("ordered by priority — want to reshuffle?"). She'll often reorder herself if it's wrong.
+
 Show the assembled draft in chat first so she can see it. **Do not send anything yet** — wait for an explicit go-ahead in step 6.
 
 ### 6. Confirm, then post as a threaded reply to today's Slackbot standup prompt

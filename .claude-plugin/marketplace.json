@@ -15,6 +15,15 @@
       }
     },
     {
+      "name": "datadog-lifecycle-dashboard",
+      "source": "./datadog-lifecycle-dashboard",
+      "description": "Generate a Datadog dashboard JSON to monitor a user lifecycle (funnel, workflow, or adoption cohorts) for a customers-backend feature/project — OR evaluate an existing dashboard link and suggest improvements. Writes the resulting JSON to /tmp/datadog-dashboards/<feature>.json for the user to copy into Datadog. Trigger whenever the user says \"make a datadog dashboard for X\", \"monitor the lifecycle of Y\", \"build me a launch dashboard for feature Z\", \"look at this datadog dashboard and tell me what's missing\", \"evaluate this dashboard <url>\", or asks for observability for a feature about to roll out. Pair with the [[audit-lifecycle-logging]] skill — that one verifies the metrics exist in code; this one charts them.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Joyce Lin"
+      }
+    },
+    {
       "name": "commit-and-push",
       "source": "./commit-and-push",
       "description": "Use when the user wants to review changes, commit with a conventional commit message, and push to the current branch, or invokes /commit-and-push",

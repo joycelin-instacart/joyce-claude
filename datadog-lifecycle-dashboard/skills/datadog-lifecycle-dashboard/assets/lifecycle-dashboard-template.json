@@ -1,0 +1,77 @@
+{
+  "title": "<Feature> — Lifecycle & Health",
+  "description": "Launch monitoring for <feature>.\n\nRunbook: <TODO: link to runbook>\nMonitors: <TODO: comma-separated monitor IDs>\n\nKnown limitations: <e.g. latency widgets show MAX — convert ICMetrics.timing → ICMetrics.distribution for true percentiles>.",
+  "layout_type": "ordered",
+  "template_variables": [
+    {
+      "name": "env",
+      "prefix": "env",
+      "default": "production",
+      "available_values": []
+    }
+  ],
+  "widgets": [
+    {
+      "definition": {
+        "type": "group",
+        "layout_type": "ordered",
+        "title": "Stage 1 — <stage name>",
+        "background_color": "vivid_blue",
+        "widgets": [
+          {
+            "definition": {
+              "type": "query_value",
+              "title": "Volume — success",
+              "requests": [
+                {
+                  "q": "sum:custom.<metric_prefix>.success{$env}.as_count()",
+                  "aggregator": "sum"
+                }
+              ],
+              "precision": 0,
+              "autoscale": true
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Errors by source",
+              "requests": [
+                {
+                  "q": "sum:custom.<metric_prefix>.error{$env} by {error_source}.as_count()",
+                  "display_type": "bars",
+                  "style": {
+                    "palette": "warm",
+                    "line_type": "solid",
+                    "line_width": "normal"
+                  }
+                }
+              ],
+              "show_legend": true,
+              "legend_layout": "auto",
+              "legend_columns": ["avg", "max", "value", "sum"]
+            }
+          },
+          {
+            "definition": {
+              "type": "timeseries",
+              "title": "Latency (max — worst-case only)",
+              "requests": [
+                {
+                  "q": "max:custom.<metric_prefix>.<timed_op>{$env}",
+                  "display_type": "line",
+                  "style": {
+                    "palette": "dog_classic",
+                    "line_type": "solid",
+                    "line_width": "normal"
+                  }
+                }
+              ],
+              "show_legend": false
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

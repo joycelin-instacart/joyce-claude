@@ -44,11 +44,13 @@ Read [`references/customers-backend-metric-patterns.md`](./references/customers-
 Then pick widget groups per the lifecycle shape (see table above). Within a group, the order is always:
 
 1. **Volume** — total `*.success` count (`sum:custom.<prefix>.success{$env}.as_count()`)
-2. **Errors** — broken down by tag (`sum:custom.<prefix>.error{$env} by {error_source}.as_count()`)
+2. **Errors** — broken down by tag (`sum:custom.<prefix>.error{$env} by {error_source}.as_count()`) **only if the code actually emits that tag**. Confirm by reading the `ICMetrics.increment` call: `ICMetrics.increment("...error", tags: { error_source: ... })`. If the emit has no `tags:` kwarg, skip the breakdown — a flat error count is more honest than a `by {invented_tag}` widget that produces no data forever.
 3. **Edge cases** — count of each non-success non-error branch the code emits (e.g. `not_found`, `missing_token`, `already_active`)
 4. **Latency** — if the step uses `ICMetrics.timing`, add `max:custom.<prefix>.<op>{$env}` with a note that this is worst-case, not p95
 
 This order matters: it's how on-call reads a dashboard during an incident — "is traffic flowing → are errors elevated → which edge case fired → how slow is the partner".
+
+**Never `by {kube_cluster_name}` / `by {service}` / `by {pod_name}`** unless the user explicitly asks for an infra view. Datadog auto-tags those, so the breakdown will technically render — but it splits a feature metric across nodes that are irrelevant to product behavior, and adds visual noise during incidents.
 
 ## Step 2 — Build the JSON
 
@@ -119,7 +121,9 @@ For each lifecycle stage you'd expect (based on the feature's metric prefixes �
 
 ### Report findings + write the revised JSON
 
-Produce a short report using this exact template (it mirrors [[audit-lifecycle-logging]] so the two skills feel like a pair):
+Produce the report **inline in your chat response** — do not write it to a `.md` file. Many environments block subagent writes for `report*.md` / `summary*.md` / `findings*.md` / `analysis*.md`, and the report is more useful in-thread anyway (the user can read it without opening a file). The only on-disk artifact in evaluate mode is the revised JSON.
+
+Use this exact template (it mirrors [[audit-lifecycle-logging]] so the two skills feel like a pair):
 
 ```markdown
 # Dashboard review — <dashboard title> (`<dashboard_id>`)

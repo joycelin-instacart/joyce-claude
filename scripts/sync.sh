@@ -32,11 +32,14 @@ log "sync starting"
 # --- enumerate personal skills ---
 # Everything in $CLAUDE_HOME/skills/ is personal (marketplace-installed skills
 # live under ~/.claude/plugins/cache/, not here).
+# Skip *-workspace/ and *-snapshot/ — skill-creator drops sibling test
+# directories there and they don't carry a SKILL.md.
 personal_skills=()
 if [[ -d "$CLAUDE_HOME/skills" ]]; then
   while IFS= read -r -d '' dir; do
     personal_skills+=("$(basename "$dir")")
-  done < <(find "$CLAUDE_HOME/skills" -mindepth 1 -maxdepth 1 -type d -print0)
+  done < <(find "$CLAUDE_HOME/skills" -mindepth 1 -maxdepth 1 -type d \
+    ! -name '*-workspace' ! -name '*-snapshot' -print0)
 fi
 
 # Patterns excluded from all rsync mirrors — these are regenerable test

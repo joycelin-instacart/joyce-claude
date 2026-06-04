@@ -1,0 +1,1 @@
+{"name": "bento-up", "description": "Use when the user wants to check that all bento services are healthy, bring the local dev env back up, restart failing services, or invokes /bento-up. Trigger on prompts like \"are my services up\", \"is bento healthy\", \"reboot anything failing\", \"make sure everything's running\".", "version": "1.0.0"}

@@ -93,17 +93,22 @@ Use `as const` so the literal type stays `true` (matches what `createClientSideF
 
 After stubbing, the dev server needs to rebuild. Touch the file once (`touch <file>`) and wait ~6 seconds before reloading the browser — rspack rebuilds aren't always picked up by HMR for variant-hook changes.
 
-### 8. Drive agent-browser to verify
+### 8. Drive a browser to verify
 
-Use the `agent-browser` skill / tool:
+**Try `agent-browser` first.** If `agent-browser open` hangs silently (no output for 60s), you're hitting the snap-chromium apparmor issue on the bento dev box. Stop trying — see fallback below.
 
+Happy path:
 1. Open the URL the page renders at (ask Joyce if it's not obvious from the route file; default to the page Joyce was last working on).
 2. Wait for `networkidle` + a 5-8s settle for hydration.
 3. Find a stable selector that identifies the changed element (a heading text from the new section, a data-testid, etc.).
 4. Confirm it's in the DOM. Measure layout (grid template, computed style) and report numbers — Joyce often wants those.
 5. Screenshot with `--full --path /tmp/force-render-<short-name>.png`.
 
+**Fallback when agent-browser hangs (snap chromium):** drive chromium directly via CDP using the script template at `/home/bento/snap/chromium/common/screenshots/shoot2.py`. Adapt the URL and viewport widths. Save outputs INSIDE `~/snap/chromium/common/screenshots/` (snap apparmor blocks writes outside `~/snap/chromium/common/`). See [[reference-chromium-snap-cdp-workaround]] for the full pattern. You'll need a fresh Cookie header in `ic-cookies.txt` if Joyce's last auth state is stale — ask her to paste a recent "Copy as cURL" from her real browser DevTools.
+
 If the changed element doesn't render even with all gates forced: re-trace. Either a gate was missed, or there's a deeper DB requirement (e.g., the user_state's conditions need a specific cohort the test user isn't in). Don't loop blindly — surface what was found and ask Joyce.
+
+**One more pitfall worth checking before you re-trace:** the FE bundle may be stale. `bento restart customers/store/web` and then verify the new field name shows up in the bundle: `grep -l "<your-new-field>" customers/store/local-build/rspack/*.js`. If grep returns nothing, the bundle didn't pick up your rebased FE — restart is the fix.
 
 ### 9. Report + clean-up instructions
 

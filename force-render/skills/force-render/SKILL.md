@@ -1,0 +1,130 @@
+---
+name: force-render
+description: Make Joyce's in-progress FE changes visible in her local browser by finding every gate between the changed code and the rendered page, forcing them open, recommending the maki commands needed for DB state, then driving agent-browser to verify. Use whenever Joyce says things like "let me see this in the browser", "force my variant on", "what do I need to render this", "make this visible locally", "show me my change", or after she finishes an FE change behind a Roulette / behind an EPP card / behind any partnership_offers / express_user_state_definitions gate. Default to this skill instead of manually stubbing FV hooks or guessing what to seed.
+---
+
+# Force Render
+
+Goal: Joyce just changed something in the FE — a component behind a Roulette, an EPP card, a partnership-offer-gated section — and wants to see it render in her local browser. Without this skill, that usually means: figure out which Roulette gates the change, stub the hook, figure out which DB tables are empty after `maki sync`, run the right command, navigate, hard-refresh, hope. This skill does the trace for her and verifies the result.
+
+## What this skill is and isn't
+
+**Is:**
+- A static-analysis pass from changed file → up the render tree → down through GraphQL fragments → into BE resolvers → out to the DB tables that gate the render.
+- A local-only "stub the FE FV hook" affordance for the gates that aren't otherwise overridable.
+- A recommendation of the `maki sync` / `maki load` command(s) needed to populate the empty tables.
+- A drive-the-browser verification step that proves the changed element actually rendered.
+
+**Isn't:**
+- A `maki` runner — Joyce decides whether to run the recommended command (the `maki load` variant resets her local DB, so it's her call).
+- A Roulette admin override — we only touch the FE FV hook file locally; the prod Roulette is unchanged.
+- A way to ship code. The stub file edits are dev-only; the skill loudly warns to revert before commit.
+
+## Workflow
+
+Run the steps in order. Don't skip the trace — knowing *all* the gates upfront prevents the "stubbed one, still empty, stubbed another" loop Joyce hates.
+
+### 1. Identify the changed surface(s)
+
+Read git status + diff to find changed FE files. Focus on `.tsx`/`.ts` in `customers/store`, `customers/help`, `customers/landing`, and any `.rb` view layout files in `customers/customers-backend/domains/view_domain`. Note both committed-on-branch and uncommitted changes — Joyce often runs this mid-implementation.
+
+For each changed FE component file, that's a starting node for the trace.
+
+### 2. Walk UP the render tree to find gates
+
+For each changed component, find every importer (`grep -rn "from '../<component-name>'" customers/store/client`). Walk up until reaching a page-level component (filename like `*Page.tsx`, in `pages/`, or rendered by a router). At each level, look for:
+
+- **FV hook calls** — anything matching `use*Variant(`, `useFeature*(`, `createClientSideFeatureVariantHook`. Capture the variable name, the file it's imported from, and the Roulette feature name from the hook definition.
+- **Conditional renders** — `if (!offerCards?.length || visibilityVariant === 'false') return null` style early-returns and ternary-based show/hide. These often reference the FV hook result OR a field from the GraphQL viewSection.
+- **Required props** — props the component needs to render at all (e.g., `partnershipOffers` non-null).
+
+Record the gate chain: `[changed file] ← [parent component, gate X] ← [grandparent, gate Y] ← [page]`.
+
+### 3. Trace DOWN through GraphQL into BE
+
+For each GraphQL fragment imported by a component in the chain (look for `gql\`fragment Xxx on Yyy { ... }\``):
+
+- Find the matching BE GraphQL type definition (`grep -rn "Yyy" customers/customers-backend/engines/graph/app/graphql/types/`).
+- Read the resolver method that returns it. In view-section-style layouts (`*_response_backed/*.rb`), the methods named `<variant>_variant`, `visibility_variant`, etc. are gates.
+- Inside resolver methods, look for:
+  - `Roulette.features["..."].enabled?` — server-side gate. Note the feature name.
+  - `FeatureVariants::Xxx.new(...).visible?` — same, wrapped in an FV class.
+  - Calls to eligibility services (e.g., `EligibilityService.find_eligible_placement_configs`, partnership status checks).
+  - DB lookups via domain APIs (`PartnershipOfferDomain::Api::GetOffer`, etc.).
+- For each eligibility/DB call, trace down to identify which **tables** must have data for the gate to evaluate true.
+
+### 4. Map gates to overrides
+
+For each gate found in steps 2 and 3, classify:
+
+| Gate kind | Override |
+|---|---|
+| FE FV hook (`createClientSideFeatureVariantHook`) | Stub the `featureVariants.ts` (or wherever the hook is exported) to return `{ visible: true, loading: false }` from the named export. Add a giant **DO NOT COMMIT** comment header. |
+| BE viewSection variant resolved server-side | The FE only sees `visibilityVariant === 'true'` (or whichever field). Override at the fragment-data layer if the FE check reads it from a non-null prop, OR (if there's a corresponding BE FV class) note that the user would need to seed prereqs (Roulette assignment, eligible user_state, etc.) — these often boil down to a DB seed in step 5. |
+| DB-backed eligibility | Map to the maki sync/load recommendation in step 5. |
+| Conditional render on `offerCards.length > 0` and the like | Trace down — there's a query behind it; the query needs DB seed. |
+
+### 5. Recommend maki commands for missing DB state
+
+For each table identified in step 3 that's likely to be empty after the typical `maki sync instacart:<group>`:
+
+- If the table is in a `.pgsync.yml` group, recommend `maki sync instacart:<group>` or `maki sync instacart:<table>` if it's listed individually.
+- If the table is NOT in `.pgsync.yml` but IS in `infra/maki/conf/customers/datasets/<name>.yml` as a `maki_pgsync` line, recommend `maki load <snapshot-variant>` (e.g., `maki load customers-express`).
+- If the table is in neither, recommend a manual `INSERT` snippet or flag that it needs a one-off seed.
+
+Output as: `> Run: maki sync instacart:express` (or whichever) with a one-line explanation of which table it populates and why it's needed. **Do not run it** — Joyce wants to decide (especially for `maki load` which resets the local DB).
+
+### 6. Apply FE stubs
+
+For each FE FV hook file flagged in step 4, rewrite the file so the hook returns `{ visible: true as const, loading: false }` directly. Add this header:
+
+```ts
+// ============================================================================
+// !! LOCAL DEV OVERRIDE — DO NOT COMMIT !!
+// Forces <variant-name> ON for local visual verification.
+// Restore before pushing:
+//   git checkout <file-path>
+// ============================================================================
+```
+
+Use `as const` so the literal type stays `true` (matches what `createClientSideFeatureVariantHook`'s real output looks like to TS).
+
+### 7. Wait for rspack/HMR
+
+After stubbing, the dev server needs to rebuild. Touch the file once (`touch <file>`) and wait ~6 seconds before reloading the browser — rspack rebuilds aren't always picked up by HMR for variant-hook changes.
+
+### 8. Drive agent-browser to verify
+
+Use the `agent-browser` skill / tool:
+
+1. Open the URL the page renders at (ask Joyce if it's not obvious from the route file; default to the page Joyce was last working on).
+2. Wait for `networkidle` + a 5-8s settle for hydration.
+3. Find a stable selector that identifies the changed element (a heading text from the new section, a data-testid, etc.).
+4. Confirm it's in the DOM. Measure layout (grid template, computed style) and report numbers — Joyce often wants those.
+5. Screenshot with `--full --path /tmp/force-render-<short-name>.png`.
+
+If the changed element doesn't render even with all gates forced: re-trace. Either a gate was missed, or there's a deeper DB requirement (e.g., the user_state's conditions need a specific cohort the test user isn't in). Don't loop blindly — surface what was found and ask Joyce.
+
+### 9. Report + clean-up instructions
+
+End with:
+- Path to the screenshot.
+- The exact `git checkout` command to revert each stubbed file.
+- The maki command Joyce should run (if she hasn't already and the DB state is still incomplete).
+- Any gates that couldn't be forced (BE-only Roulettes without a Joyce-controllable override, etc.).
+
+Don't auto-revert the stubs — Joyce often iterates and wants to keep seeing the variant for follow-up tweaks.
+
+## Gotchas (worth knowing upfront)
+
+- **Stub file must keep imports.** Leave the original imports in place at the top of the stubbed `featureVariants.ts`; add a `void` reference if needed to avoid unused-import lint errors. Joyce's lint config will flag dead imports.
+- **`useXxxxVariant({ skip: isMember })` API.** The real hook accepts an opts object. Your stub should accept `(_opts?: { skip?: boolean })` to match — TS errors otherwise.
+- **rspack rebuild can be silent for ~5s.** Don't reload the browser immediately after editing; wait, or touch the file to force a recompile signal.
+- **`maki load` is destructive.** It resets the entire local DB to a snapshot. Joyce explicitly wants to opt in. Recommend, don't run.
+- **The page-level `visibilityVariant === 'false'` check.** For non-IC+ partnership-offers, the page resolver returns False on non-marketplace store configs. If Joyce is on a partner SFX URL the whole section is hidden regardless of how many FE FVs you stub. Trace it.
+- **The store-app account page is locked to ≥1024px viewport.** Don't be surprised if narrowing the browser doesn't drop columns — the page itself horizontally scrolls instead of reflowing.
+- **EPP user-state matching is the silent killer.** A non-IC+ user sees zero offer cards if none of the 28-ish `express_offer_card` user_states have conditions that evaluate true for them. Empty `partnership_offers` table means almost every partnership-gated state evaluates false. `maki load customers-express` (snapshot) populates it; `maki sync instacart:express` does NOT (it only syncs express_* tables).
+
+## When in doubt
+
+If the trace gets murky (e.g., the gate involves a TaaS segment, a feature_dependency Joyce doesn't recognize, or a code path that goes through services not in customers-backend), surface what you found and ask Joyce. She'd rather steer than have you guess.

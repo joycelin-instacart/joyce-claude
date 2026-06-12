@@ -18,7 +18,7 @@ Goal: Joyce just changed something in the FE — a component behind a Roulette, 
 **Isn't:**
 - A `maki` runner — Joyce decides whether to run the recommended command (the `maki load` variant resets her local DB, so it's her call).
 - A Roulette admin override — we only touch the FE FV hook file locally; the prod Roulette is unchanged.
-- A way to ship code. The stub file edits are dev-only; the skill loudly warns to revert before commit.
+- A way to ship code. **Every edit this skill applies (stubs, `useDebugToggle` insertions, cookie pokes, anything else) is a local dev affordance — never `git add`, `git commit`, or `git push` from inside this skill.** Treat every code edit as "DO NOT COMMIT" by default. Joyce uses this skill to see her own in-progress change render; if a toggle or stub turns out to be ship-worthy, she'll lift it into a real product PR herself in a separate pass.
 
 ## Workflow
 
@@ -57,11 +57,13 @@ For each GraphQL fragment imported by a component in the chain (look for `gql\`f
 
 For each gate found in steps 2 and 3, classify in this order of preference (cheapest first):
 
+All overrides below are **local dev affordances** — apply them in the working tree, verify in the browser, then revert before any commit. The "preferred" column is about which override leaves the smallest cleanup footprint, NOT about which is fit to ship.
+
 | Gate kind | Preferred override | Why preferred |
 |---|---|---|
-| Component composes a flag with `useDebugToggle('<key>')` (pattern: `isEnabled = flag \|\| useDebugToggle(...)`) | Just **set the `ic_debug_toggles` cookie** in the browser. No file edit, no rebuild, no DO-NOT-COMMIT to remember. | `useDebugToggle` is platform-owned (`client/platform/shared/debug/`) and reads from the cookie at runtime. Existing prod pattern across home, MRP, placements code. |
-| FE FV hook (`createClientSideFeatureVariantHook`) — **NO** `useDebugToggle` in the component | Two options: (a) Add a one-line `\|\| useDebugToggle('<key>')` to the component (low-risk, matches house pattern, durable for future iteration) and use the cookie. (b) If Joyce wants the change kept zero-touch, stub the `featureVariants.ts` file to return `{ visible: true as const, loading: false }` with a **DO NOT COMMIT** header. Default to (a) and offer (b) as a fallback. |
-| BE viewSection variant resolved server-side | (a) Add a `useDebugToggle('<key>')` to the FE component that reads the field — `nonMemberGridEnabled = !isMember && (responsiveLayoutVariant === 'true' \|\| useDebugToggle(...))`. Cookie flips locally. (b) Stub the BE resolver method to return `BooleanVariant::True`. (a) is preferred for the same reasons as above. |
+| Component already composes a flag with `useDebugToggle('<key>')` (pattern: `isEnabled = flag \|\| useDebugToggle(...)`) | Just **set the `ic_debug_toggles` cookie** in the browser. **No file edit at all** — zero cleanup. | `useDebugToggle` is platform-owned (`client/platform/shared/debug/`) and reads from the cookie at runtime. Pre-existing toggle = no diff to revert. |
+| FE FV hook (`createClientSideFeatureVariantHook`) — **NO** `useDebugToggle` in the component | Two options, both local-only: (a) Temporarily add `\|\| useDebugToggle('<key>')` to the component and use the cookie. (b) Stub the `featureVariants.ts` file to return `{ visible: true as const, loading: false }`. Either way, add the DO-NOT-COMMIT header described below and revert via `git checkout` before committing. Pick whichever Joyce finds easier to revert (the stub is usually more surgical). |
+| BE viewSection variant resolved server-side | Two options, both local-only: (a) Temporarily add `useDebugToggle('<key>')` to the FE component that reads the field — `nonMemberGridEnabled = !isMember && (responsiveLayoutVariant === 'true' \|\| useDebugToggle(...))`. (b) Stub the BE resolver method to return `BooleanVariant::True`. Either way, DO NOT COMMIT — revert before pushing. |
 | DB-backed eligibility | Map to the maki sync/load recommendation in step 5 — no FE override can fake DB data. |
 | Conditional render on `offerCards.length > 0` and the like | Trace down — there's a query behind it; the query needs DB seed. |
 
@@ -82,13 +84,22 @@ For each table identified in step 3 that's likely to be empty after the typical 
 
 Output as: `> Run: maki sync instacart:express` (or whichever) with a one-line explanation of which table it populates and why it's needed. **Do not run it** — Joyce wants to decide (especially for `maki load` which resets the local DB).
 
-### 6. Apply overrides (prefer cookie, fall back to stub)
+### 6. Apply overrides (local-only — never commit)
 
-For each gate flagged in step 4:
+For each gate flagged in step 4. **Every edit below is a temporary working-tree change. Don't stage, don't commit, don't push.** Tell Joyce up front what you're editing and offer the `git checkout` command to revert it in the same message.
 
-**If the override is the `ic_debug_toggles` cookie** (component already composes with `useDebugToggle`, OR Joyce agrees to add a one-line `|| useDebugToggle('<key>')` to her component): drive the browser to set the cookie via `Runtime.evaluate` (CDP) or agent-browser `eval`. No file edit. If Joyce agrees to the one-line component addition, apply that edit — it's a real product change worth shipping, not a dev affordance.
+**If the override is the `ic_debug_toggles` cookie alone** (component already composes with `useDebugToggle`): drive the browser to set the cookie via `Runtime.evaluate` (CDP) or agent-browser `eval`. No file edit, no cleanup needed.
 
-**If the override is a file stub** (last resort), rewrite the FE FV hook file so the hook returns `{ visible: true as const, loading: false }` directly. Add this header:
+**If the override is a temporary `useDebugToggle('<key>')` insertion** into a component that doesn't currently compose with one: apply the edit, then immediately surface the revert command (`git checkout <path>`) in your reply. Add a top-of-file DO-NOT-COMMIT comment so Joyce sees it if she happens to scroll past:
+
+```ts
+// !! LOCAL DEV OVERRIDE — DO NOT COMMIT !! Added by force-render to flip <variant> ON locally.
+// Revert: git checkout <file-path>
+```
+
+If Joyce later decides the toggle is genuinely worth shipping, that's a separate decision she makes outside this skill — open a fresh ask, don't roll it into the force-render flow.
+
+**If the override is a file stub** (FE FV hook returning `{ visible: true as const, loading: false }`, or a BE resolver returning `BooleanVariant::True`): rewrite the file and add this header at the top:
 
 ```ts
 // ============================================================================
@@ -99,7 +110,7 @@ For each gate flagged in step 4:
 // ============================================================================
 ```
 
-Use `as const` so the literal type stays `true` (matches what `createClientSideFeatureVariantHook`'s real output looks like to TS).
+Use `as const` for the FE stub so the literal type stays `true` (matches what `createClientSideFeatureVariantHook`'s real output looks like to TS).
 
 ### 7. Wait for rspack/HMR
 
@@ -126,11 +137,14 @@ If the changed element doesn't render even with all gates forced: re-trace. Eith
 
 End with:
 - Path to the screenshot.
-- The exact `git checkout` command to revert each stubbed file.
+- The exact `git checkout` command to revert **every** file you touched in step 6 — stubs AND `useDebugToggle` insertions AND anything else. List them as a single block Joyce can paste.
+- The cookie-clear snippet if you set any debug cookies.
 - The maki command Joyce should run (if she hasn't already and the DB state is still incomplete).
 - Any gates that couldn't be forced (BE-only Roulettes without a Joyce-controllable override, etc.).
 
-Don't auto-revert the stubs — Joyce often iterates and wants to keep seeing the variant for follow-up tweaks.
+Don't auto-revert and don't auto-commit — Joyce often iterates and wants to keep seeing the variant for follow-up tweaks. Leave the working tree dirty with the cleanup commands handy so she can revert on her own schedule.
+
+Do NOT offer "commit + push" as a next-step option at the end of the run. The skill stops at "rendered + cleanup snippets surfaced". If Joyce decides the toggle/stub is worth shipping (rare), she'll open a separate ask for that.
 
 ## Gotchas (worth knowing upfront)
 

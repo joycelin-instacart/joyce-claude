@@ -116,7 +116,15 @@ Use `as const` for the FE stub so the literal type stays `true` (matches what `c
 
 After stubbing, the dev server needs to rebuild. Touch the file once (`touch <file>`) and wait ~6 seconds before reloading the browser — rspack rebuilds aren't always picked up by HMR for variant-hook changes.
 
-### 8. Drive a browser to verify
+### 8. Pre-flight: ensure bento is healthy
+
+Before driving any browser, invoke the **`bento-up`** skill via the `Skill` tool. Reason: a half-healthy bento (especially `customers/store/web` or `customers/customers-backend/web` in `timeout` state) will silently swallow page loads and waste a 240s CDP timeout. `bento-up` enumerates unhealthy services and restarts them; takes ~30-90s when `customers-backend/web` is involved.
+
+Do this even if the last `bento status` you ran looked fine — health drifts between turns, and a stale `timeout` row is the most common reason the browser verification step hangs with no output.
+
+If `bento-up` reports everything is healthy, proceed to step 9 immediately — no harm done. If it restarted anything, wait for it to confirm green before driving the browser.
+
+### 9. Drive a browser to verify
 
 **Try `agent-browser` first.** If `agent-browser open` hangs silently (no output for 60s), you're hitting the snap-chromium apparmor issue on the bento dev box. Stop trying — see fallback below.
 
@@ -133,7 +141,7 @@ If the changed element doesn't render even with all gates forced: re-trace. Eith
 
 **One more pitfall worth checking before you re-trace:** the FE bundle may be stale. `bento restart customers/store/web` and then verify the new field name shows up in the bundle: `grep -l "<your-new-field>" customers/store/local-build/rspack/*.js`. If grep returns nothing, the bundle didn't pick up your rebased FE — restart is the fix.
 
-### 9. Report + clean-up instructions
+### 10. Report + clean-up instructions
 
 End with:
 - Path to the screenshot.

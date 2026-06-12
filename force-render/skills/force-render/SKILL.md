@@ -55,14 +55,22 @@ For each GraphQL fragment imported by a component in the chain (look for `gql\`f
 
 ### 4. Map gates to overrides
 
-For each gate found in steps 2 and 3, classify:
+For each gate found in steps 2 and 3, classify in this order of preference (cheapest first):
 
-| Gate kind | Override |
-|---|---|
-| FE FV hook (`createClientSideFeatureVariantHook`) | Stub the `featureVariants.ts` (or wherever the hook is exported) to return `{ visible: true, loading: false }` from the named export. Add a giant **DO NOT COMMIT** comment header. |
-| BE viewSection variant resolved server-side | The FE only sees `visibilityVariant === 'true'` (or whichever field). Override at the fragment-data layer if the FE check reads it from a non-null prop, OR (if there's a corresponding BE FV class) note that the user would need to seed prereqs (Roulette assignment, eligible user_state, etc.) — these often boil down to a DB seed in step 5. |
-| DB-backed eligibility | Map to the maki sync/load recommendation in step 5. |
+| Gate kind | Preferred override | Why preferred |
+|---|---|---|
+| Component composes a flag with `useDebugToggle('<key>')` (pattern: `isEnabled = flag \|\| useDebugToggle(...)`) | Just **set the `ic_debug_toggles` cookie** in the browser. No file edit, no rebuild, no DO-NOT-COMMIT to remember. | `useDebugToggle` is platform-owned (`client/platform/shared/debug/`) and reads from the cookie at runtime. Existing prod pattern across home, MRP, placements code. |
+| FE FV hook (`createClientSideFeatureVariantHook`) — **NO** `useDebugToggle` in the component | Two options: (a) Add a one-line `\|\| useDebugToggle('<key>')` to the component (low-risk, matches house pattern, durable for future iteration) and use the cookie. (b) If Joyce wants the change kept zero-touch, stub the `featureVariants.ts` file to return `{ visible: true as const, loading: false }` with a **DO NOT COMMIT** header. Default to (a) and offer (b) as a fallback. |
+| BE viewSection variant resolved server-side | (a) Add a `useDebugToggle('<key>')` to the FE component that reads the field — `nonMemberGridEnabled = !isMember && (responsiveLayoutVariant === 'true' \|\| useDebugToggle(...))`. Cookie flips locally. (b) Stub the BE resolver method to return `BooleanVariant::True`. (a) is preferred for the same reasons as above. |
+| DB-backed eligibility | Map to the maki sync/load recommendation in step 5 — no FE override can fake DB data. |
 | Conditional render on `offerCards.length > 0` and the like | Trace down — there's a query behind it; the query needs DB seed. |
+
+**The `useDebugToggle` cookie format** (paste into DevTools console; works for any key, registered or not):
+```js
+document.cookie = `ic_debug_toggles=${encodeURIComponent(JSON.stringify({your_key: true}))}; path=/; max-age=2592000; samesite=lax`
+location.reload()
+```
+Clear with: `document.cookie = 'ic_debug_toggles=; path=/; max-age=0'; location.reload()`. Or just visit `Cmd+Ctrl+Shift+D` for the debug panel (only registered keys appear there; cookie works for unregistered).
 
 ### 5. Recommend maki commands for missing DB state
 
@@ -74,9 +82,13 @@ For each table identified in step 3 that's likely to be empty after the typical 
 
 Output as: `> Run: maki sync instacart:express` (or whichever) with a one-line explanation of which table it populates and why it's needed. **Do not run it** — Joyce wants to decide (especially for `maki load` which resets the local DB).
 
-### 6. Apply FE stubs
+### 6. Apply overrides (prefer cookie, fall back to stub)
 
-For each FE FV hook file flagged in step 4, rewrite the file so the hook returns `{ visible: true as const, loading: false }` directly. Add this header:
+For each gate flagged in step 4:
+
+**If the override is the `ic_debug_toggles` cookie** (component already composes with `useDebugToggle`, OR Joyce agrees to add a one-line `|| useDebugToggle('<key>')` to her component): drive the browser to set the cookie via `Runtime.evaluate` (CDP) or agent-browser `eval`. No file edit. If Joyce agrees to the one-line component addition, apply that edit — it's a real product change worth shipping, not a dev affordance.
+
+**If the override is a file stub** (last resort), rewrite the FE FV hook file so the hook returns `{ visible: true as const, loading: false }` directly. Add this header:
 
 ```ts
 // ============================================================================

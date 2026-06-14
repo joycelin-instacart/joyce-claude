@@ -2,20 +2,33 @@
 """Capture one render state across web/iOS/Android viewports via headless Chrome (CDP).
 
 Drives snap-chromium over the DevTools Protocol (the path that works on the bento box,
-where agent-browser hangs on snap apparmor). Loads the user's auth cookies, optionally
-sets an ic_debug_toggles gate, then for each device profile emulates the viewport,
-navigates, measures the offers section, and screenshots the full page.
+where agent-browser hangs on snap apparmor). Loads the user's auth cookies, applies
+whatever gate-override the caller supplies (an arbitrary cookie and/or request header —
+NOT a hardcoded mechanism), then for each device profile emulates the viewport,
+navigates, measures the target section, and screenshots the full page.
 
 Outputs MUST land under ~/snap/chromium/common/ — snap apparmor blocks writes elsewhere.
 
+How the gate gets flipped is the caller's decision, because it differs per change:
+  - Server-side Roulette FeatureVariant  -> --cookie 'feature_overrides=<fv>.variant.<value>'
+                                            (and/or --header 'X-Feature-Overrides=<fv>.variant.<value>')
+  - Client useDebugToggle / ic_debug_toggles -> --toggle <key1,key2>  (or --no-toggle for the off state)
+Discover the right mechanism + value with the force-render skill; don't guess it here.
+
 Usage:
-  capture.py --url URL --out-prefix PREFIX [--toggle k1,k2 | --no-toggle]
+  capture.py --url URL --out-prefix PREFIX
+             [--cookie 'name=value' ...]      # repeatable; arbitrary cookies (e.g. feature_overrides)
+             [--header 'Name: value' ...]     # repeatable; arbitrary request headers (e.g. X-Feature-Overrides)
+             [--toggle k1,k2 | --no-toggle]   # legacy ic_debug_toggles convenience
              [--platforms web,ios,android] [--settle 8] [--port 9347]
              [--heading-re 'member exclusive|partner|offer|reward|perks']
 
 Produces PREFIX-web.png, PREFIX-ios.png, PREFIX-android.png in --out-dir.
-Prints a one-line layout measurement per platform so the caller can confirm the
-state actually changed (e.g. display:flex vs display:grid) without seeing the image.
+Prints a one-line layout measurement per platform so the caller can confirm the state
+actually changed (display:flex vs display:grid, card count, card width) WITHOUT seeing
+the image. If the target section is absent it prints a loud "SECTION ABSENT" marker —
+that means the account/user-state doesn't render this surface (e.g. a member account on
+a non-member section), which no gate flip can fix; fix the user state first.
 """
 import argparse, base64, json, subprocess, time, urllib.request
 from urllib.parse import quote
@@ -44,8 +57,12 @@ def parse_args():
     p.add_argument("--out-dir", default="/home/bento/snap/chromium/common/screenshots")
     p.add_argument("--cookie-file", default="/home/bento/snap/chromium/common/screenshots/ic-cookies.txt")
     p.add_argument("--domain", default="www.instacart.com.test")
-    p.add_argument("--toggle", default="", help="comma-separated ic_debug_toggles keys to set true")
-    p.add_argument("--no-toggle", action="store_true", help="explicitly clear ic_debug_toggles (control state)")
+    p.add_argument("--cookie", action="append", default=[],
+                   help="arbitrary cookie 'name=value' to set (repeatable). Use for feature_overrides etc.")
+    p.add_argument("--header", action="append", default=[],
+                   help="arbitrary request header 'Name: value' to set (repeatable). Use for X-Feature-Overrides etc.")
+    p.add_argument("--toggle", default="", help="legacy: comma-separated ic_debug_toggles keys to set true")
+    p.add_argument("--no-toggle", action="store_true", help="legacy: explicitly clear ic_debug_toggles (off state)")
     p.add_argument("--platforms", default="web,ios,android")
     p.add_argument("--settle", type=float, default=8.0, help="seconds to wait after load for hydration")
     p.add_argument("--port", type=int, default=9347)
@@ -61,28 +78,51 @@ def build_cookies(args):
         if "=" in part:
             n, v = part.split("=", 1)
             cookies.append({"name": n, "value": v, "domain": args.domain, "path": "/"})
+    # legacy ic_debug_toggles convenience (client-side debug gates only)
     keys = [k.strip() for k in args.toggle.split(",") if k.strip()]
     if keys:
         val = quote(json.dumps({k: True for k in keys}))
         cookies.append({"name": "ic_debug_toggles", "value": val, "domain": args.domain, "path": "/"})
     elif args.no_toggle:
-        # explicitly empty so a previously-set toggle can't leak into the control shot
+        # explicitly empty so a previously-set toggle can't leak into the off shot
         cookies.append({"name": "ic_debug_toggles", "value": "", "domain": args.domain, "path": "/"})
+    # arbitrary cookies (the general gate-override mechanism, e.g. feature_overrides).
+    # Appended last so an explicit --cookie can override anything above.
+    for raw in args.cookie:
+        if "=" not in raw:
+            print(f"  !! ignoring malformed --cookie {raw!r} (expected name=value)"); continue
+        n, v = raw.split("=", 1)
+        cookies.append({"name": n.strip(), "value": v, "domain": args.domain, "path": "/"})
     return cookies
+
+
+def build_headers(args):
+    headers = {}
+    for raw in args.header:
+        # accept 'Name: value' or 'Name=value'
+        if ":" in raw:
+            n, v = raw.split(":", 1)
+        elif "=" in raw:
+            n, v = raw.split("=", 1)
+        else:
+            print(f"  !! ignoring malformed --header {raw!r} (expected 'Name: value')"); continue
+        headers[n.strip()] = v.strip()
+    return headers
 
 
 def main():
     args = parse_args()
     cookies = build_cookies(args)
+    headers = build_headers(args)
     platforms = [p.strip() for p in args.platforms.split(",") if p.strip()]
     measure_js = """
       (()=>{
         const re = new RegExp(%s, 'i');
         const hs = Array.from(document.querySelectorAll('h2'));
         const h = hs.find(el => re.test(el.textContent||''));
-        if(!h) return JSON.stringify({err:'no heading', h2s: hs.map(x=>(x.textContent||'').trim()).slice(0,8)});
+        if(!h) return JSON.stringify({absent:true, reason:'no matching heading', h2s: hs.map(x=>(x.textContent||'').trim()).slice(0,8)});
         const cc = h.parentElement.children[1];
-        if(!cc) return JSON.stringify({err:'no container', heading:(h.textContent||'').trim()});
+        if(!cc) return JSON.stringify({absent:true, reason:'heading found but no container', heading:(h.textContent||'').trim()});
         const cs = getComputedStyle(cc);
         const first = cc.children[0] ? cc.children[0].getBoundingClientRect() : {width:0,left:0,right:0};
         return JSON.stringify({heading:(h.textContent||'').trim(), display:cs.display,
@@ -134,6 +174,10 @@ def main():
         send("Network.enable"); send("Page.enable")
         send("Network.clearBrowserCookies")
         send("Network.setCookies", {"cookies": cookies})
+        if headers:
+            # applies to every request this session makes (e.g. X-Feature-Overrides)
+            send("Network.setExtraHTTPHeaders", {"headers": headers})
+            print("   headers:", ", ".join(headers.keys()))
 
         for name in platforms:
             if name not in PROFILES:
@@ -146,7 +190,14 @@ def main():
             send("Page.navigate", {"url": "about:blank"}); wait_load(5)
             send("Page.navigate", {"url": args.url}); wait_load(30); time.sleep(args.settle)
             m = send("Runtime.evaluate", {"expression": measure_js})
-            print("   layout:", m.get("result", {}).get("result", {}).get("value", "?"))
+            val = m.get("result", {}).get("result", {}).get("value", "?")
+            # A loud, parseable signal so the caller catches a user-state mismatch instead
+            # of silently shipping two blank columns. No gate flip can render a section the
+            # account isn't eligible for — that's a force-render / data problem.
+            if isinstance(val, str) and '"absent":true' in val:
+                print(f"   !! SECTION ABSENT ({name}): {val}")
+            else:
+                print("   layout:", val)
             # nudge the section into view in case lazy content needs it
             send("Runtime.evaluate", {"expression":
                 "const h=Array.from(document.querySelectorAll('h2')).find(e=>new RegExp(%s,'i').test(e.textContent||''));if(h)h.scrollIntoView({block:'start'});"

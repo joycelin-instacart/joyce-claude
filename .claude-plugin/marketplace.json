@@ -123,6 +123,15 @@
       }
     },
     {
+      "name": "compare-render",
+      "source": "./compare-render",
+      "description": "Capture side-by-side screenshots of a frontend change across web + iOS + Android viewports and assemble them into one labeled contact sheet, so you can eyeball the visual diff on every platform at once. Use this whenever the user wants to SEE what a change looks like — \"screenshot my change on iOS and android\", \"before/after of this branch\", \"what does this look like on mobile\", \"compare control vs variant\", \"show me the new layout on phone + desktop\". Two modes: CONTROL-vs-VARIANT (the change is behind a runtime gate — flip the gate, no rebuild) and BEFORE-vs-AFTER (no gate — render the code at merge-base with origin/master, then the working tree). Composes with the force-render skill to discover and force the gate. Local-only, never committed. Reach for this even if the user only says \"iOS and Android\" — offer web too, it's free.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Joyce Lin"
+      }
+    },
+    {
       "name": "find-skill-candidates",
       "source": "./find-skill-candidates",
       "description": "Use when the user wants to analyze their Claude Code prompt history to find recurring asks that could be automated into skills. Triggers on phrases like \"find skill candidates\", \"what should I automate?\", \"analyze my prompts\", \"are there skills I should create?\", \"look at my recent Claude usage and suggest skills\", or \"/find-skill-candidates\". Surfaces clusters of semantically similar prompts, dedupes against skills/commands the user already has, and offers to hand each accepted candidate off to skill-creator with a pre-filled brief.",

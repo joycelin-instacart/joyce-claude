@@ -207,6 +207,16 @@ python3 ~/.claude/skills/compare-render/scripts/contact_sheet.py \
 Restoring the working tree is non-negotiable — run the `checkout HEAD -- $FILES` even on
 failure. Leaving the user's branch reverted is far worse than a missing screenshot.
 
+**Cosmetic changes are visual-only — confirm the diff in the PNG, not the numbers.**
+`capture.py` measures heading text + the card container's layout (display/grid/gap/cards/
+cardW). A heading restyle (background, border, padding, color, font) or any pure-CSS cosmetic
+edit leaves *every one of those numbers identical* before vs after — the change lives only in
+the rendered pixels. Do **not** read identical measurements as "the revert didn't take" or
+"there's no difference"; for cosmetic edits that's the *expected* result. Open the contact
+sheet and confirm the visible difference yourself, and say so explicitly in your report
+("measurements identical by design; the highlight box is visible in after, absent in before").
+Only suspect a stale bundle if the *rendered image* is unchanged where you expect a change.
+
 ### Confirming the rebuild (before-vs-after only)
 
 rspack must finish rebuilding before you shoot, or you capture a stale bundle. The dev
@@ -230,6 +240,24 @@ until [ "$(stat -c %Y "$BUNDLE")" -gt "$before_mtime" ]; do sleep 2; done   # re
 and is **not** on the serving path. It was the readiness check in an earlier version of
 this skill and silently passed against old code. The `build/client` + `build/manifest`
 paths above are the real ones.
+
+**Also confirm the SSR upstream actually recovered (HTTP 200), not just that the bundle
+mtime advanced.** The store dev server is fragile during a revert-rebuild: `proxy-server.js`
+can crash with an uncaught `ERR_HTTP_HEADERS_SENT` when the SSR upstream errors mid-compile,
+and the store SSR itself can fall over under memory pressure (kill stray chromium processes
+first — each capture leaves several). A fresh bundle behind a dead server still yields a blank
+or error page. After the mtime advances, poll the actual route until it serves 200 before
+shooting:
+
+```bash
+until [ "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:8081<route-path>")" = "200" ]; do sleep 2; done
+```
+
+A transient connection-refused for a second or two right after the `git checkout` is normal
+(the proxy restarting) — retry for ~30s before treating it as a real outage. **Do not**
+`bento restart` the store/proxy to fix it: that triggers an interactive Okta device
+re-authorization that hangs a headless run. If the server is genuinely wedged, surface it to
+the user rather than trying to restart it yourself.
 
 > Why not a git worktree? A worktree keeps the tree pristine, but the dev server serves
 > the *main* checkout's bundle — it won't serve a worktree without a second dev server on

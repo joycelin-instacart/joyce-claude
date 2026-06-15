@@ -1,16 +1,17 @@
 ---
 name: compare-render
 description: >-
-  Capture side-by-side screenshots of a frontend change across web + iOS + Android
-  viewports and assemble them into one labeled contact sheet, so you can eyeball the
-  visual diff on every platform at once. Use this whenever the user wants to SEE what
-  a change looks like — "screenshot my change on iOS and android", "before/after of
-  this branch", "what does this look like on mobile", "compare control vs variant",
-  "show me the new layout on phone + desktop". Two modes: CONTROL-vs-VARIANT (the
-  change is behind a runtime flag — flip the flag per shot, no rebuild) and
-  BEFORE-vs-AFTER (ungated code — render the code at merge-base with origin/master,
-  then the working tree). Reach for this even if the user only says "iOS and Android"
-  — offer web too, it's free. Local-only, never committed.
+  Capture and save side-by-side SCREENSHOT files of a frontend change across web + iOS +
+  Android viewports, montaged into one labeled contact-sheet PNG, so you can eyeball the
+  visual diff on every platform at once. The screenshot / contact-sheet tool — use it
+  whenever the user wants IMAGES of a change: "screenshot my change on iOS and android",
+  "before/after of this branch", "what does this look like on mobile", "compare control vs
+  variant", "show me the new layout on phone + desktop". Two modes: CONTROL-vs-VARIANT
+  (change behind a runtime flag — flip per shot, no rebuild) and BEFORE-vs-AFTER (ungated
+  code — render merge-base vs working tree). Even if the user only says "iOS and Android",
+  offer web too. Boundaries: if a change won't render at all locally because it's behind an
+  unopened gate, use force-render first to MAKE it visible, then this to capture it; and this
+  does NOT write visual-regression or snapshot tests. Local-only, never committed.
 ---
 
 # compare-render

@@ -123,6 +123,15 @@
       }
     },
     {
+      "name": "push-to-personal-staging",
+      "source": "./push-to-personal-staging",
+      "description": "Deploys a branch or PR to Joyce's personal ISC staging stack (the `icapp` app under user `joycelin`, via `isc staging create-stack` / `isc launch` on the remote `staging` env). Trigger whenever Joyce wants to put her branch or a PR onto her own personal/joycelin staging — including \"push to my staging\", \"push it to my joycelin stack\", \"throw this PR on my staging\", \"get this onto my personal staging\", \"deploy current branch to my staging\", \"stand up my personal stack from this branch\", \"rebuild my joycelin stack with this branch\", \"tear it down and redeploy\", \"blow away my joycelin and spin it back up\", \"stale stack fresh feature — redeploy\". The words \"joycelin\", \"my joycelin stack\", \"my personal staging\", \"my icapp staging\", or \"my staging\" plus a deploy/push/throw/stand-up/rebuild/redeploy/blow-away verb always mean THIS remote ISC stack — not local bento dev services. Do NOT trigger when Joyce asks to set up a DIFFERENT named stack (e.g. \"name it ictc-pilot, not joycelin\"), when she wants to view/debug existing stack state without redeploy, when she only wants to delete without redeploy, on isc doc/concept questions, or on pure git work (rebase, push to origin, open PR).",
+      "version": "1.0.0",
+      "author": {
+        "name": "Joyce Lin"
+      }
+    },
+    {
       "name": "compare-render",
       "source": "./compare-render",
       "description": "Capture side-by-side screenshots of a frontend change across web + iOS + Android viewports and assemble them into one labeled contact sheet, so you can eyeball the visual diff on every platform at once. Use this whenever the user wants to SEE what a change looks like — \"screenshot my change on iOS and android\", \"before/after of this branch\", \"what does this look like on mobile\", \"compare control vs variant\", \"show me the new layout on phone + desktop\". Two modes: CONTROL-vs-VARIANT (the change is behind a runtime gate — flip the gate, no rebuild) and BEFORE-vs-AFTER (no gate — render the code at merge-base with origin/master, then the working tree). Composes with the force-render skill to discover and force the gate. Local-only, never committed. Reach for this even if the user only says \"iOS and Android\" — offer web too, it's free.",

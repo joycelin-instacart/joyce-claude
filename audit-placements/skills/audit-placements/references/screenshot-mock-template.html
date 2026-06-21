@@ -1,0 +1,142 @@
+<!--
+  HTML mock template for audit-placements Step 5d.
+
+  Fill in the placeholders marked {{ ... }} with production strings copied
+  verbatim from the surface's YAML / view layout / resolver. Save as
+  <slug>-mock.html and render with:
+
+    chromium --headless --disable-gpu --hide-scrollbars \
+      --window-size=560,200 \
+      --screenshot=/home/bento/snap/chromium/common/screenshots/<slug>-mock.png \
+      "file://$PWD/<slug>-mock.html"
+
+  Three variants below — pick the one closest to the surface family and adapt:
+    1. Card / tile (storefront banner, account-page benefit tile, offer card)
+    2. Cart drawer / cart-message banner
+    3. Modal (welcome modal, partnership redemption modal, announcement modal)
+
+  Brand mark slot: Mastercard logo is two overlapping circles (red + orange).
+  IC+ uses the Instacart green carrot pill. Generic surfaces can use a small
+  square placeholder.
+
+  Always include the literal MOCK label in the doc cell caption — never let
+  a mock pass for a real prod capture.
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; padding: 0; background: #F6F7F8; }
+  body { padding: 16px; font-family: -apple-system, system-ui, sans-serif; }
+
+  /* === Variant 1: Card / tile === */
+  .placement-card {
+    font: 14px -apple-system, system-ui, sans-serif;
+    color: #242529;
+    background: #fff;
+    border: 1px solid #E8E9EB;
+    border-radius: 12px;
+    padding: 16px 20px;
+    width: 520px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .placement-card .brand-mark {
+    width: 42px; height: 30px;
+    background: #fff;
+    border: 1px solid #E8E9EB;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .placement-card .body { flex: 1; }
+  .placement-card .title { font-weight: 600; font-size: 14px; }
+  .placement-card .subtitle { margin-top: 4px; color: #6F7378; font-size: 12px; }
+  .placement-card .cta {
+    margin-top: 12px;
+    display: inline-block;
+    padding: 8px 14px;
+    background: #0AAD0A;
+    color: #fff;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  /* Mastercard brand mark — two overlapping circles */
+  .mark-mastercard span:first-child {
+    display: inline-block; width: 14px; height: 14px;
+    background: #EB001B; border-radius: 50%; margin-right: -6px;
+  }
+  .mark-mastercard span:last-child {
+    display: inline-block; width: 14px; height: 14px;
+    background: #F79E1B; border-radius: 50%; opacity: 0.85;
+  }
+
+  /* IC+ brand mark */
+  .mark-icplus {
+    color: #0AAD0A; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;
+  }
+
+  /* === Variant 2: Cart banner === */
+  .cart-banner {
+    background: #FFF8E1;
+    border-left: 4px solid #FFB300;
+    padding: 12px 16px;
+    width: 520px;
+    font: 13px -apple-system, system-ui, sans-serif;
+    color: #242529;
+  }
+
+  /* === Variant 3: Modal === */
+  .modal-overlay {
+    background: rgba(0,0,0,0.45);
+    width: 560px; height: 380px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal-body {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px;
+    width: 420px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+  }
+  .modal-body h2 { margin: 0 0 8px; font-size: 18px; }
+  .modal-body p { margin: 0 0 16px; color: #6F7378; font-size: 14px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<!-- VARIANT 1 — Card / tile (most common). Swap .mark-mastercard for .mark-icplus or a custom mark. -->
+<div class="placement-card">
+  <div class="brand-mark mark-mastercard">
+    <span></span><span></span>
+  </div>
+  <div class="body">
+    <div class="title">{{ TITLE — e.g. "$20 Instacart credit each month" }}</div>
+    <div class="subtitle">{{ SUBTITLE / BODY — e.g. "Applies to your second order each month. Active Instacart+ membership and eligible Mastercard required." }}</div>
+    <!-- Optional CTA: -->
+    <!-- <a class="cta">{{ CTA — e.g. "Redeem now" }}</a> -->
+  </div>
+</div>
+
+<!-- VARIANT 2 — Cart banner. Uncomment and remove the card above.
+<div class="cart-banner">
+  {{ CART BANNER COPY — e.g. "Add $8.50 more for free delivery with Instacart+" }}
+</div>
+-->
+
+<!-- VARIANT 3 — Modal. Uncomment and remove the card above.
+<div class="modal-overlay">
+  <div class="modal-body">
+    <h2>{{ MODAL HEADING }}</h2>
+    <p>{{ MODAL BODY COPY — keep production wording verbatim }}</p>
+    <a class="cta" style="background:#0AAD0A;color:#fff;padding:10px 20px;border-radius:24px;text-decoration:none">{{ CTA }}</a>
+  </div>
+</div>
+-->
+
+</body>
+</html>

@@ -88,7 +88,7 @@ Output of this step lives in your context as a working list of (surface, cohort,
 
 ## Step 3 — Confirm rows + columns with the user
 
-ALWAYS pause here. Show the user:
+Show the user:
 
 - The proposed row list as a **markdown table preview** (Surface + Cohort only — keep it scannable)
 - The 6 default columns
@@ -96,6 +96,8 @@ ALWAYS pause here. Show the user:
 Ask: "Looks right? Anything to add or remove?" — let them prune before screenshot work begins. This one confirmation costs one message and saves hours of capture effort on rows that won't make the cut.
 
 If they say "go", lock the list. Treat later additions as appended rows, not a table rebuild.
+
+**Headless mode (no interactive user):** If you're running in a non-interactive context (subagent, eval, CI — basically any context where you can't get a human reply mid-run), don't skip this step — *externalize* it. Write the proposed row list to `outputs/rows-proposal.md` as the FIRST artifact (before any screenshot work, before doc creation), then proceed with all proposed rows. The proposal becomes the artifact the reviewer reads after the fact and the pruning conversation moves to the iteration-N+1 loop. Without this file, the reviewer has no way to tell which rows were considered-and-rejected vs missed-entirely.
 
 ## Step 4 — Build the doc skeleton
 
@@ -162,21 +164,41 @@ If agent-browser can't reach the state (cart drawer behind an overlay-intercepte
 
 Save each cropped PNG to `/home/bento/snap/chromium/common/screenshots/<audit-slug>-<row-id>.png` (apparmor requires this directory).
 
-### 5d. When a screenshot is genuinely blocked
+### 5d. When a real prod capture is blocked — MOCK FIRST, don't surrender to "Not captured"
 
-If after all grants the surface still won't render:
+If after all grants the surface still won't render in prod, the default move is **build an HTML mock**, not give up. Steps in order:
 
-1. **State the SPECIFIC remaining gate** — not "couldn't capture" but "needs an active row in partnership_redemptions for user X on benefit_id=110". Be exact enough that the user could unblock it next turn if they chose.
-2. **Try a mock** — render the placement copy in a small HTML page with production strings, screenshot, label it `MOCK`. Better than nothing.
-3. If even a mock isn't possible, **describe** the surface in 1–2 lines.
+1. **Build an HTML mock** — render the placement copy in a small HTML page using the production string literals (from YAML, view layout, or rendered template), screenshot via Chromium with `--screenshot=<path>`, embed in the doc with a clear `MOCK` label in the Screenshot cell caption. A labeled mock is dramatically more useful than a "Not captured — needs cookie" row because the reader is reading a *doc*, not your filesystem; they want to see the surface. The act of writing the mock also forces you to actually locate the copy in code, which surfaces missing strings.
 
-Either way the row stays in the table — see Step 6 status labels.
+   Use the copy-pasteable template at [`references/screenshot-mock-template.html`](./references/screenshot-mock-template.html) — fill in the title, body, brand mark (Mastercard / IC+ / generic), and render it via:
+
+   ```bash
+   chromium --headless --disable-gpu --hide-scrollbars \
+     --window-size=560,200 \
+     --screenshot=/home/bento/snap/chromium/common/screenshots/<slug>-mock.png \
+     "file:///path/to/mock.html"
+   ```
+
+   Skip the mock ONLY if the row has no renderable copy at all — pure backend resolvers, migration jobs, YAML configs with no body literal. In that case write the status text instead (step 3).
+
+2. **State the SPECIFIC remaining gate** in the Status column — not "couldn't capture" but "Blocked — needs active row in partnership_redemptions for user X on benefit_id=110". Be exact enough that the user could unblock it next turn if they chose. This applies even when you DID render a mock — the mock shows what the surface looks like; the Status column tells the reader what's blocking the real capture.
+
+3. If no copy exists to mock AND no real capture is possible, **describe** the surface in 1–2 lines in the Screenshot cell AND cite the codepath that would render it. This is the rarest case.
+
+The row stays in the table either way — see Step 6 status labels.
 
 ## Step 6 — Populate rows (bottom-up)
 
+**Inline images are LOAD-BEARING.** A captured PNG sitting in `outputs/` with no `insertImage` call into the doc is NOT done — the reader is in the doc, not your filesystem. Every row's Screenshot cell must end up containing one of:
+
+- An inline image (gist URL → `insertImage` into the cell), real prod capture or MOCK
+- A Status that names the exact missing gate (and ideally a MOCK image alongside per Step 5d)
+
+The gist + insertImage round-trip is the load-bearing step in screenshot capture — not the `agent-browser screenshot` call. "Captured but didn't embed" reads as "missed the surface" to the doc reader.
+
 Editing a Google Doc table shifts indices for everything below the edit. So:
 
-1. Push each cropped screenshot to a public gist (`mcp__github__create_gist`) — `insertImage` needs a URL, not a local path.
+1. Push each cropped screenshot to a public gist (`mcp__github__create_gist` with all PNGs in one batch — one gist per audit, not one per image) — `insertImage` requires a URL, not a local path. The MCP rejects `localImagePath` silently in sandboxed environments. Capture the raw gist URLs into a small `insert_plan.json` so you can re-run the inserts deterministically if the doc-edit pass partial-fails.
 2. Edit table cells **from the LAST row up to the FIRST**. This preserves the indices you cached in Step 4.
 3. For each cell, use the recipes in [`references/gdoc-table-recipes.md`](./references/gdoc-table-recipes.md):
    - Clear content: `deleteRange(cellStart, cellEnd-1)` — that window is the safe deletable range
@@ -223,7 +245,9 @@ Reply to the user with:
 ## What this skill should NOT do
 
 - **Don't fabricate screenshots.** If a surface won't render, say so and offer a mock. Never paste a similar surface and call it close enough.
-- **Don't ship rows silently.** Every row in the table either has a screenshot or has a Status that names the missing gate.
+- **Don't ship rows silently.** Every row in the table either has an inline image (real or MOCK) or has a Status that names the missing gate.
+- **Don't split into multiple tables.** Even if the user's prompt suggests Table 1 / Table 2 / Table 3 (e.g. one per copy variant, one per surface family), push back and consolidate. The single table IS the value prop — it's what lets a PM scan "what does cohort X see across all surfaces" in one pass. If grouping matters, use a sort order or a Cohort-prefix in the Surface column, not separate tables. Surface the structural reason in your reply ("merging into one table because that's what makes the doc PM-scannable; happy to re-split if you'd rather").
+- **Don't claim drift without a byte-equal compare.** YAML can store `%{var}` placeholders while the DB stores the interpolated form — that's not drift. Before flagging "DB title disagrees with YAML source", actually interpolate the YAML template with the same inputs and compare the rendered output. A raw-string diff on uninterpolated YAML is noise.
 - **Don't ask for grants one-at-a-time.** Trace all gates for all surfaces first, batch the ask. The user's turnaround cost is real.
 - **Don't guess from FV names.** A flag called `force_eligible` describes one check, not the whole chain. Read the chain in code before deciding what a grant will unblock.
 - **Don't bundle adjacent-domain placements.** If your grep drifts into another team's surfaces (e.g. you're auditing Mastercard SMB and find IC+ trial placements), flag them and ask before adding rows — scope creep makes the doc less useful, not more.

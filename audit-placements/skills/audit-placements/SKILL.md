@@ -168,9 +168,11 @@ Save each cropped PNG to `/home/bento/snap/chromium/common/screenshots/<audit-sl
 
 If after all grants the surface still won't render in prod, the default move is **build an HTML mock**, not give up. Steps in order:
 
-1. **Build an HTML mock** — render the placement copy in a small HTML page using the production string literals (from YAML, view layout, or rendered template), screenshot via Chromium with `--screenshot=<path>`, embed in the doc with a clear `MOCK` label in the Screenshot cell caption. A labeled mock is dramatically more useful than a "Not captured — needs cookie" row because the reader is reading a *doc*, not your filesystem; they want to see the surface. The act of writing the mock also forces you to actually locate the copy in code, which surfaces missing strings.
+1. **Build an HTML mock of the WHOLE component, not just the copy.** Render the placement in a small HTML page using the production string literals (from YAML, view layout, or rendered template), screenshot via Chromium with `--screenshot=<path>`, embed in the doc with a clear `MOCK` label in the Screenshot cell caption. A labeled mock is dramatically more useful than a "Not captured — needs cookie" row because the reader is reading a *doc*, not your filesystem; they want to see the surface.
 
-   Use the copy-pasteable template at [`references/screenshot-mock-template.html`](./references/screenshot-mock-template.html) — fill in the title, body, brand mark (Mastercard / IC+ / generic), and render it via:
+   **The component frame is load-bearing — render every visible piece a real user would see, not just the inner text.** For a modal: backdrop overlay, modal frame, header / title, body copy, primary CTA, secondary CTA, dismiss X. For a card: brand mark, title, body, AND any action buttons. For a cart banner: full banner with icon, copy, optional dismiss. A mock that shows only the title + subtitle text reads as "the agent didn't look at the surface" — it loses the comparison value PMs use mocks for ("is this CTA copy clear next to the dismiss option?"). When in doubt, render *more* chrome, not less.
+
+   Use the copy-pasteable template at [`references/screenshot-mock-template.html`](./references/screenshot-mock-template.html) — fill in the title, body, CTAs, brand mark, and render it via:
 
    ```bash
    chromium --headless --disable-gpu --hide-scrollbars \

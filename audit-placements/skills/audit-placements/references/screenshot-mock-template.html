@@ -1,26 +1,29 @@
 <!--
   HTML mock template for audit-placements Step 5d.
 
-  Fill in the placeholders marked {{ ... }} with production strings copied
-  verbatim from the surface's YAML / view layout / resolver. Save as
-  <slug>-mock.html and render with:
+  CORE RULE: render the WHOLE COMPONENT, not just the inner text.
+  - Modal mock = backdrop + frame + header + body + primary CTA + secondary CTA + dismiss X
+  - Card mock = brand mark + title + body + action button(s) (don't omit CTAs even if surface usually has none — note it as "no CTA" via comment instead)
+  - Banner mock = full banner including icon, copy, dismiss
+  A "text-only" mock is a failed mock — the reader can't compare CTA copy
+  next to dismiss copy, can't see hierarchy, can't tell if the body wraps.
+
+  Fill in placeholders marked {{ ... }} with production strings copied verbatim
+  from the surface's YAML / view layout / resolver. Save as <slug>-mock.html
+  and render with chromium headless:
 
     chromium --headless --disable-gpu --hide-scrollbars \
-      --window-size=560,200 \
+      --window-size=640,520 \
       --screenshot=/home/bento/snap/chromium/common/screenshots/<slug>-mock.png \
       "file://$PWD/<slug>-mock.html"
 
-  Three variants below — pick the one closest to the surface family and adapt:
-    1. Card / tile (storefront banner, account-page benefit tile, offer card)
-    2. Cart drawer / cart-message banner
-    3. Modal (welcome modal, partnership redemption modal, announcement modal)
+  Window-size guide: card 580×220, banner 580×120, modal 640×520.
 
-  Brand mark slot: Mastercard logo is two overlapping circles (red + orange).
-  IC+ uses the Instacart green carrot pill. Generic surfaces can use a small
-  square placeholder.
+  Three variants below — pick the one matching the surface family.
+  Brand marks: Mastercard (red+orange circles), IC+ (green pill), generic square.
 
-  Always include the literal MOCK label in the doc cell caption — never let
-  a mock pass for a real prod capture.
+  Always include the literal MOCK label in the doc cell caption.
+  Never let a mock pass for a real prod capture.
 -->
 
 <!DOCTYPE html>
@@ -29,111 +32,119 @@
 <meta charset="utf-8">
 <style>
   html, body { margin: 0; padding: 0; background: #F6F7F8; }
-  body { padding: 16px; font-family: -apple-system, system-ui, sans-serif; }
+  body { padding: 16px; font-family: -apple-system, system-ui, sans-serif; color: #242529; }
+  * { box-sizing: border-box; }
+
+  /* === Shared brand marks === */
+  .mark-mastercard { width: 42px; height: 30px; background: #fff; border: 1px solid #E8E9EB; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .mark-mastercard span:first-child { display: inline-block; width: 14px; height: 14px; background: #EB001B; border-radius: 50%; margin-right: -6px; }
+  .mark-mastercard span:last-child  { display: inline-block; width: 14px; height: 14px; background: #F79E1B; border-radius: 50%; opacity: 0.85; }
+  .mark-icplus { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: #0AAD0A; color: #fff; border-radius: 10px; font-weight: 700; font-size: 10px; letter-spacing: 0.5px; flex-shrink: 0; }
+  .mark-generic { width: 32px; height: 32px; background: #E8E9EB; border-radius: 6px; flex-shrink: 0; }
+
+  /* === Shared button styles === */
+  .btn-primary { display: inline-block; padding: 10px 18px; background: #0AAD0A; color: #fff; border-radius: 24px; font-weight: 600; font-size: 13px; text-decoration: none; border: none; cursor: pointer; }
+  .btn-secondary { display: inline-block; padding: 10px 18px; background: transparent; color: #0AAD0A; border-radius: 24px; font-weight: 600; font-size: 13px; text-decoration: none; border: 1.5px solid #0AAD0A; cursor: pointer; }
+  .btn-link { color: #6F7378; font-size: 13px; text-decoration: underline; cursor: pointer; }
+  .dismiss-x { position: absolute; top: 14px; right: 14px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; color: #6F7378; font-size: 18px; cursor: pointer; background: none; border: none; line-height: 1; }
 
   /* === Variant 1: Card / tile === */
-  .placement-card {
-    font: 14px -apple-system, system-ui, sans-serif;
-    color: #242529;
-    background: #fff;
-    border: 1px solid #E8E9EB;
-    border-radius: 12px;
-    padding: 16px 20px;
-    width: 520px;
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-  }
-  .placement-card .brand-mark {
-    width: 42px; height: 30px;
-    background: #fff;
-    border: 1px solid #E8E9EB;
-    border-radius: 4px;
-    display: flex; align-items: center; justify-content: center;
-  }
+  .placement-card { background: #fff; border: 1px solid #E8E9EB; border-radius: 12px; padding: 18px 20px; width: 540px; display: flex; align-items: flex-start; gap: 14px; position: relative; }
   .placement-card .body { flex: 1; }
-  .placement-card .title { font-weight: 600; font-size: 14px; }
-  .placement-card .subtitle { margin-top: 4px; color: #6F7378; font-size: 12px; }
-  .placement-card .cta {
-    margin-top: 12px;
-    display: inline-block;
-    padding: 8px 14px;
-    background: #0AAD0A;
-    color: #fff;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 13px;
-  }
-
-  /* Mastercard brand mark — two overlapping circles */
-  .mark-mastercard span:first-child {
-    display: inline-block; width: 14px; height: 14px;
-    background: #EB001B; border-radius: 50%; margin-right: -6px;
-  }
-  .mark-mastercard span:last-child {
-    display: inline-block; width: 14px; height: 14px;
-    background: #F79E1B; border-radius: 50%; opacity: 0.85;
-  }
-
-  /* IC+ brand mark */
-  .mark-icplus {
-    color: #0AAD0A; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;
-  }
+  .placement-card .title { font-weight: 600; font-size: 15px; line-height: 1.3; }
+  .placement-card .subtitle { margin-top: 4px; color: #6F7378; font-size: 13px; line-height: 1.4; }
+  .placement-card .actions { margin-top: 14px; display: flex; gap: 8px; align-items: center; }
 
   /* === Variant 2: Cart banner === */
-  .cart-banner {
-    background: #FFF8E1;
-    border-left: 4px solid #FFB300;
-    padding: 12px 16px;
-    width: 520px;
-    font: 13px -apple-system, system-ui, sans-serif;
-    color: #242529;
-  }
+  .cart-banner { background: #FFF8E1; border-left: 4px solid #FFB300; padding: 14px 16px; width: 540px; font-size: 13px; line-height: 1.4; display: flex; gap: 12px; align-items: center; position: relative; }
+  .cart-banner .icon { width: 24px; height: 24px; flex-shrink: 0; background: #FFB300; border-radius: 50%; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+  .cart-banner .copy { flex: 1; }
+  .cart-banner .cta-inline { color: #0AAD0A; font-weight: 600; text-decoration: underline; cursor: pointer; }
 
   /* === Variant 3: Modal === */
-  .modal-overlay {
-    background: rgba(0,0,0,0.45);
-    width: 560px; height: 380px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .modal-body {
-    background: #fff;
-    border-radius: 16px;
-    padding: 28px;
-    width: 420px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.2);
-  }
-  .modal-body h2 { margin: 0 0 8px; font-size: 18px; }
-  .modal-body p { margin: 0 0 16px; color: #6F7378; font-size: 14px; line-height: 1.5; }
+  .modal-overlay { background: rgba(0,0,0,0.55); width: 600px; height: 480px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+  .modal-body { background: #fff; border-radius: 16px; padding: 28px 28px 24px; width: 440px; box-shadow: 0 8px 32px rgba(0,0,0,0.24); position: relative; }
+  .modal-body .modal-icon { width: 64px; height: 64px; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center; background: #F6F7F8; border-radius: 50%; }
+  .modal-body h2 { margin: 0 0 10px; font-size: 20px; font-weight: 700; text-align: center; }
+  .modal-body p.body-copy { margin: 0 0 22px; color: #4F5256; font-size: 14px; line-height: 1.5; text-align: center; }
+  .modal-body ul.benefits { margin: 0 0 22px; padding: 0; list-style: none; }
+  .modal-body ul.benefits li { padding: 6px 0; font-size: 13px; color: #242529; display: flex; gap: 8px; align-items: flex-start; }
+  .modal-body ul.benefits li::before { content: "✓"; color: #0AAD0A; font-weight: 700; flex-shrink: 0; }
+  .modal-body .modal-actions { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+  .modal-body .modal-actions .btn-primary,
+  .modal-body .modal-actions .btn-secondary { text-align: center; padding: 12px 18px; font-size: 14px; }
 </style>
 </head>
 <body>
 
-<!-- VARIANT 1 — Card / tile (most common). Swap .mark-mastercard for .mark-icplus or a custom mark. -->
+<!-- ============================================================ -->
+<!-- VARIANT 1 — Card / tile                                      -->
+<!-- Use for: account-page benefit tile, offer card, storefront   -->
+<!--   credit-back card, EPP express_offer_card placements        -->
+<!-- Swap .mark-mastercard for .mark-icplus or .mark-generic      -->
+<!-- ============================================================ -->
 <div class="placement-card">
-  <div class="brand-mark mark-mastercard">
-    <span></span><span></span>
-  </div>
+  <span class="mark-mastercard"><span></span><span></span></span>
   <div class="body">
     <div class="title">{{ TITLE — e.g. "$20 Instacart credit each month" }}</div>
     <div class="subtitle">{{ SUBTITLE / BODY — e.g. "Applies to your second order each month. Active Instacart+ membership and eligible Mastercard required." }}</div>
-    <!-- Optional CTA: -->
-    <!-- <a class="cta">{{ CTA — e.g. "Redeem now" }}</a> -->
+    <div class="actions">
+      <a class="btn-primary">{{ PRIMARY CTA — e.g. "Redeem now" }}</a>
+      <a class="btn-link">{{ SECONDARY LINK — e.g. "Learn more" — delete if surface has none }}</a>
+    </div>
   </div>
+  <button class="dismiss-x" aria-label="Dismiss">×</button>
 </div>
 
-<!-- VARIANT 2 — Cart banner. Uncomment and remove the card above.
+<!-- ============================================================ -->
+<!-- VARIANT 2 — Cart banner                                      -->
+<!-- Uncomment and remove the card above.                         -->
+<!-- Use for: cart-message banner, EPP express_cart_banner,       -->
+<!--   add-for-free-delivery upsell                               -->
+<!-- ============================================================ -->
+<!--
 <div class="cart-banner">
-  {{ CART BANNER COPY — e.g. "Add $8.50 more for free delivery with Instacart+" }}
+  <span class="icon">!</span>
+  <div class="copy">
+    {{ BANNER COPY — e.g. "Add $8.50 more for free delivery with Instacart+." }}
+    <a class="cta-inline">{{ INLINE CTA — e.g. "Try free for 14 days" }}</a>
+  </div>
+  <button class="dismiss-x" aria-label="Dismiss">×</button>
 </div>
 -->
 
-<!-- VARIANT 3 — Modal. Uncomment and remove the card above.
+<!-- ============================================================ -->
+<!-- VARIANT 3 — Modal (full chrome)                              -->
+<!-- Uncomment and remove the card above.                         -->
+<!-- Use for: welcome modal, partnership redemption modal,        -->
+<!--   announcement modal, checkout subscribe modal               -->
+<!-- This renders the FULL modal: backdrop + frame + icon +       -->
+<!-- title + body copy + benefits list + primary + secondary CTAs -->
+<!-- + dismiss X. Do NOT strip pieces — the comparison value of   -->
+<!-- the mock comes from seeing CTA copy next to dismiss copy.    -->
+<!-- ============================================================ -->
+<!--
 <div class="modal-overlay">
   <div class="modal-body">
-    <h2>{{ MODAL HEADING }}</h2>
-    <p>{{ MODAL BODY COPY — keep production wording verbatim }}</p>
-    <a class="cta" style="background:#0AAD0A;color:#fff;padding:10px 20px;border-radius:24px;text-decoration:none">{{ CTA }}</a>
+    <button class="dismiss-x" aria-label="Dismiss">×</button>
+
+    <div class="modal-icon">
+      <span class="mark-mastercard"><span></span><span></span></span>
+    </div>
+
+    <h2>{{ MODAL HEADING — e.g. "Welcome to your Mastercard SMB benefits" }}</h2>
+    <p class="body-copy">{{ MODAL BODY — keep production wording verbatim — e.g. "You've unlocked $20 in monthly Instacart credit and a 3-month Instacart+ trial." }}</p>
+
+    <ul class="benefits">
+      <li>{{ BENEFIT LINE 1 — e.g. "$20 credit applied to your second order each month" }}</li>
+      <li>{{ BENEFIT LINE 2 — e.g. "3 months of Instacart+ free trial" }}</li>
+      <li>{{ BENEFIT LINE 3 — delete if surface has fewer benefits }}</li>
+    </ul>
+
+    <div class="modal-actions">
+      <a class="btn-primary">{{ PRIMARY CTA — e.g. "Start shopping" }}</a>
+      <a class="btn-secondary">{{ SECONDARY CTA — e.g. "View terms" — delete if surface has none }}</a>
+    </div>
   </div>
 </div>
 -->

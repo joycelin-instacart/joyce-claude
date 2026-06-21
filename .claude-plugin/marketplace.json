@@ -123,6 +123,15 @@
       }
     },
     {
+      "name": "audit-placements",
+      "source": "./audit-placements",
+      "description": "Comprehensive audit of placements / banners / surfaces / cards (storefront, cart, checkout, account page, modals) that produces a PM-and-Manager-readable Google Doc with one consolidated table. Use whenever the user wants an inventory, audit, gap analysis, or coverage map of user-facing surfaces — phrases like \"audit all <X> placements\", \"what banners do we show <cohort>\", \"produce an inventory of <Y> surfaces\", \"where does the $N incentive render\", \"make a google doc listing every checkout placement for express members\", \"I need a slide-able audit doc for my PM\", \"what cards does a retained SMB user see\". Scans Blazer (placements / banners / partnership_offers tables) and the customers-backend codebase in parallel, drafts the row list FOR USER CONFIRMATION before committing, then builds ONE consolidated table with these columns — Surface, Cohort, Codepath/IDs, Status, Condition, Screenshot. Captures screenshots from prod via agent-browser with prod cookies (localhost as fallback); for surfaces gated by user state, traces the FULL eligibility chain in code FIRST to identify the load-bearing gate, then BATCHES every grant request (roulette overrides, coupon/policy grants, IC+ status changes, DB inserts) into ONE round trip. Rows that can't be captured stay in the table with the SPECIFIC missing gate spelled out — never silently dropped. Distinct from audit-lifecycle-logging (that one is about backend observability / logs / metrics; this one is about user-visible surfaces and what they look like).",
+      "version": "1.0.0",
+      "author": {
+        "name": "Joyce Lin"
+      }
+    },
+    {
       "name": "push-to-personal-staging",
       "source": "./push-to-personal-staging",
       "description": "Deploys a branch or PR to Joyce's personal ISC staging stack (the `icapp` app under user `joycelin`, via `isc staging create-stack` / `isc launch` on the remote `staging` env). Trigger whenever Joyce wants to put her branch or a PR onto her own personal/joycelin staging — including \"push to my staging\", \"push it to my joycelin stack\", \"throw this PR on my staging\", \"get this onto my personal staging\", \"deploy current branch to my staging\", \"stand up my personal stack from this branch\", \"rebuild my joycelin stack with this branch\", \"tear it down and redeploy\", \"blow away my joycelin and spin it back up\", \"stale stack fresh feature — redeploy\". The words \"joycelin\", \"my joycelin stack\", \"my personal staging\", \"my icapp staging\", or \"my staging\" plus a deploy/push/throw/stand-up/rebuild/redeploy/blow-away verb always mean THIS remote ISC stack — not local bento dev services. Do NOT trigger when Joyce asks to set up a DIFFERENT named stack (e.g. \"name it ictc-pilot, not joycelin\"), when she wants to view/debug existing stack state without redeploy, when she only wants to delete without redeploy, on isc doc/concept questions, or on pure git work (rebase, push to origin, open PR).",

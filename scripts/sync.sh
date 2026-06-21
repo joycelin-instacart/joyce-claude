@@ -61,7 +61,7 @@ for name in "${personal_skills[@]}"; do
 
   # Scaffold plugin.json if missing or empty/invalid (preserves hand-edited versions once valid)
   pj="$plugin_dir/.claude-plugin/plugin.json"
-  if [[ ! -f "$pj" ]] || ! jq -e . "$pj" > /dev/null 2>&1; then
+  if [[ ! -s "$pj" ]] || ! jq -e . "$pj" > /dev/null 2>&1; then
     "$SCRIPT_DIR/parse_frontmatter.py" "$CLAUDE_HOME/skills/$name/SKILL.md" > "$pj"
   fi
 done

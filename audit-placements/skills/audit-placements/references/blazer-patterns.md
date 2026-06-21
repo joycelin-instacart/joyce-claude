@@ -15,34 +15,32 @@ Filter the output for placement-shaped names: `*_placements`, `*_banners`, `*_ca
 
 Source-of-truth tables for what's configured on cart / checkout / account cards.
 
-### List active EPP placements
+### List recent EPP placements
+
+Actual `express_placements` schema (verified 2026-06): `(id, placement_type, layout_type, data, created_at, updated_at, updated_by)`. There is **no** `name` column and **no** `is_enabled` flag — the placement's targeting/enablement lives downstream in `express_targeting_placement_configs`. The `data` column is JSON with the row's contents.
 
 ```sql
 SELECT
   id,
-  name,
   placement_type,
-  is_enabled,
-  created_at,
-  updated_at
+  layout_type,
+  updated_at,
+  updated_by,
+  data
 FROM express_placements
-WHERE is_enabled = true
-  AND created_at > {blazer_now} - INTERVAL '2 years'
+WHERE updated_at > {blazer_now} - INTERVAL '2 years'
 ORDER BY updated_at DESC
 LIMIT 200;
 ```
 
+Filter by domain keyword inside the JSON, e.g. `WHERE data ILIKE '%mastercard_smb%'`.
+
 ### Targeting configs for a specific placement
 
+Inspect with `mcp__blazer__blazer_get_schema(data_source="main", table="express_targeting_placement_configs")` before guessing columns — schemas drift. Typical filter shape:
+
 ```sql
-SELECT
-  id,
-  express_placement_id,
-  target_audience,
-  variant_weights,
-  start_date,
-  end_date,
-  is_enabled
+SELECT *
 FROM express_targeting_placement_configs
 WHERE express_placement_id = <placement_id>
   AND created_at > {blazer_now} - INTERVAL '1 year';
@@ -50,13 +48,10 @@ WHERE express_placement_id = <placement_id>
 
 ### Eligibility rules
 
+Same pattern — schema first, then filter:
+
 ```sql
-SELECT
-  id,
-  express_placement_id,
-  rule_type,
-  rule_payload,
-  is_enabled
+SELECT *
 FROM express_placement_eligibilities
 WHERE express_placement_id = <placement_id>
   AND created_at > {blazer_now} - INTERVAL '1 year';
@@ -68,17 +63,20 @@ Partnership cards (account page Mastercard tile, Chase tile, etc.) are gated by 
 
 ### List active partnership offers
 
+Actual `partnership_offers` schema (verified 2026-06): `(id, name, display_name, path, start_date, end_date, country_ids, ...)` — there is **no** `partnership_type`, **no** `is_active`, and **no** `active_start_date`/`active_end_date`. "Active" = `end_date > now()` (or NULL).
+
 ```sql
 SELECT
   id,
   name,
-  partnership_type,
-  active_start_date,
-  active_end_date,
-  is_active
+  display_name,
+  path,
+  start_date,
+  end_date,
+  country_ids
 FROM partnership_offers
-WHERE is_active = true
-  AND (active_end_date IS NULL OR active_end_date > {blazer_now})
+WHERE (end_date IS NULL OR end_date > {blazer_now})
+  AND start_date < {blazer_now}
   AND created_at > {blazer_now} - INTERVAL '3 years'
 ORDER BY name;
 ```
@@ -130,6 +128,8 @@ Pay attention to `variantWeights` — a FV at 100% variant behaves very differen
 
 ## Gotchas
 
+- **Verify columns before SELECTing them.** Schemas drift. Run `mcp__blazer__blazer_get_schema(data_source="main", table="<name>")` once, then write the SELECT. The example SQL above pins the verified shape as of 2026-06, but treat it as a starting point — a stale column name will fail the whole query and force a retry.
+- **`information_schema` introspection trips Blazer's no-time-filter guard.** `SELECT * FROM information_schema.columns WHERE table_name = '…'` will be rejected. Use `blazer_get_schema` instead.
 - **Data source name matters.** `main` works for almost everything placement-related. `customers_growth` is usually denied; if a query needs it, ask the user rather than guessing your way through error messages.
 - **`{blazer_now}` is required.** Blazer rejects queries without a time bound on long-lived tables. Use `INTERVAL '<N> years'` if you really want a wide window.
 - **Lowercase status values.** Real rows tend to use `status='active'` (lowercase), not `'ACTIVE'`. Verify with a `SELECT DISTINCT status FROM …` before filtering.

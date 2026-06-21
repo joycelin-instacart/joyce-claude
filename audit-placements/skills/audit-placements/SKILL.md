@@ -70,9 +70,11 @@ See [`references/blazer-patterns.md`](./references/blazer-patterns.md) for ready
 **Codebase** — for each placement family, locate the rendering code path:
 
 ```bash
-# Resolvers, view layouts, view-backed responses, FE components
-rg -n --type ruby '<placement_keyword>' carrot/customers/customers-backend/app
-rg -n --type-add 'tsx:*.tsx' --type tsx '<placement_keyword>' carrot/customers/storefront/store
+# customers-backend uses {domains,engines,layers} — there is NO top-level app/ tree for placement code.
+# domains/ holds business logic (predicates like mastercard_smb_eligible?), engines/ holds GraphQL
+# mutations and resolvers, layers/ holds view layouts and response-backed view builders.
+rg -n --type ruby '<placement_keyword>' carrot/customers/customers-backend/{domains,engines,layers}
+rg -n --type-add 'tsx:*.tsx' --type tsx '<placement_keyword>' carrot/customers/store/client
 ```
 
 For each surface, identify:
@@ -106,7 +108,12 @@ Insert in order:
 3. **Placements** (Heading 2) — table built via `mcp__google-docs__insertTableWithData`. Header row uses the 6 cols. Body rows: one per (surface × cohort), populated now with Surface name, Cohort, Codepath/IDs, and Condition text. Status: tentative. Screenshot: empty.
 4. **Methodology** (Heading 2) — placeholder; fill in Step 7
 
-Then call `readDocument` once and cache cell start/end indices for every cell you'll later edit. Re-reading after every edit is expensive and indices shift after each insert. See [`references/gdoc-table-recipes.md`](./references/gdoc-table-recipes.md).
+**Fresh table vs amending an existing one — pick the cheaper write path:**
+
+- For a freshly-built table where you already know every text cell up front (the common case for this skill), pass all rows to `insertTableWithData` as a single call. No cell-index math, no bottom-up edits — text is inlined at creation. Screenshots get inserted as images later via `insertImage`, but the text columns are done in one MCP call.
+- For amending a table that already has rows (rare in this skill — usually only happens if you missed a row and the user wants it appended), use the bottom-up cell-edit pattern in Step 6 to preserve indices.
+
+Then call `readDocument` once and cache cell start/end indices for every cell where you'll later insert a screenshot image. Re-reading after every edit is expensive and indices shift after each insert. See [`references/gdoc-table-recipes.md`](./references/gdoc-table-recipes.md).
 
 ## Step 5 — Capture screenshots (minimize round-trips!)
 

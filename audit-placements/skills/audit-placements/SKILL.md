@@ -168,7 +168,7 @@ Save each cropped PNG to `/home/bento/snap/chromium/common/screenshots/<audit-sl
 
 If after all grants the surface still won't render in prod, the default move is **build an HTML mock**, not give up. Steps in order:
 
-1. **Build an HTML mock of the WHOLE component, not just the copy.** Render the placement in a small HTML page using the production string literals (from YAML, view layout, or rendered template), screenshot via Chromium with `--screenshot=<path>`, embed in the doc with a clear `MOCK` label in the Screenshot cell caption. A labeled mock is dramatically more useful than a "Not captured — needs cookie" row because the reader is reading a *doc*, not your filesystem; they want to see the surface.
+1. **Build an HTML mock of the WHOLE component, not just the copy.** Render the placement in a small HTML page using the production string literals (from YAML, view layout, or rendered template), screenshot via Chromium, embed in the doc with a clear `MOCK` label in the Screenshot cell caption. A labeled mock is dramatically more useful than a "Not captured — needs cookie" row because the reader is reading a *doc*, not your filesystem; they want to see the surface.
 
    **The component frame is load-bearing — render every visible piece a real user would see, not just the inner text.** For a modal: backdrop overlay, modal frame, header / title, body copy, primary CTA, secondary CTA, dismiss X. For a card: brand mark, title, body, AND any action buttons. For a cart banner: full banner with icon, copy, optional dismiss. A mock that shows only the title + subtitle text reads as "the agent didn't look at the surface" — it loses the comparison value PMs use mocks for ("is this CTA copy clear next to the dismiss option?"). When in doubt, render *more* chrome, not less.
 
@@ -177,11 +177,36 @@ If after all grants the surface still won't render in prod, the default move is 
    ```bash
    chromium --headless --disable-gpu --hide-scrollbars \
      --window-size=560,200 \
+     --virtual-time-budget=3000 \
+     --run-all-compositor-stages-before-draw \
      --screenshot=/home/bento/snap/chromium/common/screenshots/<slug>-mock.png \
      "file:///path/to/mock.html"
    ```
 
+   The `--virtual-time-budget` and `--run-all-compositor-stages-before-draw` flags are load-bearing: without them, chromium races page layout and produces a partially-rendered (or empty) PNG. The bytes look like a valid PNG but the pixels are blank or generic — and the failure mode is *silent*. See validation step below.
+
    Skip the mock ONLY if the row has no renderable copy at all — pure backend resolvers, migration jobs, YAML configs with no body literal. In that case write the status text instead (step 3).
+
+   **Validate every rendered mock before shipping to the doc.** Chromium headless `--screenshot` *can and does* silently produce blank/partial PNGs when layout races. Two cheap checks catch every degenerate output:
+
+   ```bash
+   # In your batch render script, after each chromium call:
+   size=$(stat -c%s "$png")
+   hash=$(md5sum "$png" | awk '{print $1}')
+   if [ "$size" -lt 2000 ]; then
+     echo "DEGENERATE: $png is only $size bytes — render failed"
+     exit 1
+   fi
+   if grep -q "^$hash" rendered_hashes.txt; then
+     echo "DUPLICATE: $png matches a previously rendered mock — render failed"
+     exit 1
+   fi
+   echo "$hash  $png" >> rendered_hashes.txt
+   ```
+
+   A real placement mock is almost always >5KB once text and chrome render. PNGs under 2KB are blanks. And two different mocks producing byte-identical PNGs means chromium captured an empty viewport before either rendered — both must be re-rendered, not shipped.
+
+   When validation fails, options in order: (a) increase `--virtual-time-budget` to 5000ms and retry, (b) switch to playwright/puppeteer which waits for `networkidle` by default, (c) describe the surface in the Screenshot cell instead of shipping a broken PNG. Never ship a degenerate mock to the doc — the reader sees "blank gray rectangle" and concludes the audit was sloppy.
 
 2. **State the SPECIFIC remaining gate** in the Status column — not "couldn't capture" but "Blocked — needs active row in partnership_redemptions for user X on benefit_id=110". Be exact enough that the user could unblock it next turn if they chose. This applies even when you DID render a mock — the mock shows what the surface looks like; the Status column tells the reader what's blocking the real capture.
 
@@ -200,11 +225,7 @@ The gist + insertImage round-trip is the load-bearing step in screenshot capture
 
 Editing a Google Doc table shifts indices for everything below the edit. So:
 
-1. Push each cropped screenshot to a public gist (`mcp__github__create_gist` with all PNGs in one batch — one gist per audit, not one per image) — `insertImage` requires a URL, not a local path. The MCP rejects `localImagePath` silently in sandboxed environments. Capture the raw gist URLs into a small `insert_plan.json` so you can re-run the inserts deterministically if the doc-edit pass partial-fails.
-
-   **Warm the CDN before `insertImage`.** Google Docs fetches the image at insert-time via its own image proxy and *caches the result* — including failures. If you pin to a brand-new commit hash and call `insertImage` immediately, the first several fetches will race `gist.githubusercontent.com`'s CDN propagation, return 404, and Google will store an "Access to the file was denied" placeholder in the doc that won't recover even after the URL goes live. To avoid this:
-   - After the gist push, wait ~10 seconds, then `curl -sIo /dev/null` each raw URL once and confirm 200 before any `insertImage` call. This both gates on CDN propagation and warms the edge cache Google's proxy will hit.
-   - If you prefer to skip the warm step, use the no-hash form `https://gist.githubusercontent.com/<user>/<gist>/raw/<filename>` (always points to the latest commit and is CDN-stable from earlier pushes) — tradeoff: the doc isn't pinned to a specific version of the image.
+1. Push each cropped screenshot to a public gist (`mcp__github__create_gist` with all PNGs in one batch — one gist per audit, not one per image) — `insertImage` requires a URL, not a local path. The MCP rejects `localImagePath` silently in sandboxed environments. Capture the raw gist URLs into a small `insert_plan.json` so you can re-run the inserts deterministically if the doc-edit pass partial-fails. Use the no-hash form `https://gist.githubusercontent.com/<user>/<gist>/raw/<filename>` (always points to the latest commit and is CDN-stable from earlier pushes).
 2. Edit table cells **from the LAST row up to the FIRST**. This preserves the indices you cached in Step 4.
 3. For each cell, use the recipes in [`references/gdoc-table-recipes.md`](./references/gdoc-table-recipes.md):
    - Clear content: `deleteRange(cellStart, cellEnd-1)` — that window is the safe deletable range

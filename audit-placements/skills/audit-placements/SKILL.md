@@ -201,6 +201,10 @@ The gist + insertImage round-trip is the load-bearing step in screenshot capture
 Editing a Google Doc table shifts indices for everything below the edit. So:
 
 1. Push each cropped screenshot to a public gist (`mcp__github__create_gist` with all PNGs in one batch — one gist per audit, not one per image) — `insertImage` requires a URL, not a local path. The MCP rejects `localImagePath` silently in sandboxed environments. Capture the raw gist URLs into a small `insert_plan.json` so you can re-run the inserts deterministically if the doc-edit pass partial-fails.
+
+   **Warm the CDN before `insertImage`.** Google Docs fetches the image at insert-time via its own image proxy and *caches the result* — including failures. If you pin to a brand-new commit hash and call `insertImage` immediately, the first several fetches will race `gist.githubusercontent.com`'s CDN propagation, return 404, and Google will store an "Access to the file was denied" placeholder in the doc that won't recover even after the URL goes live. To avoid this:
+   - After the gist push, wait ~10 seconds, then `curl -sIo /dev/null` each raw URL once and confirm 200 before any `insertImage` call. This both gates on CDN propagation and warms the edge cache Google's proxy will hit.
+   - If you prefer to skip the warm step, use the no-hash form `https://gist.githubusercontent.com/<user>/<gist>/raw/<filename>` (always points to the latest commit and is CDN-stable from earlier pushes) — tradeoff: the doc isn't pinned to a specific version of the image.
 2. Edit table cells **from the LAST row up to the FIRST**. This preserves the indices you cached in Step 4.
 3. For each cell, use the recipes in [`references/gdoc-table-recipes.md`](./references/gdoc-table-recipes.md):
    - Clear content: `deleteRange(cellStart, cellEnd-1)` — that window is the safe deletable range

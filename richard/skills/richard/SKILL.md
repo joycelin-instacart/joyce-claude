@@ -201,6 +201,10 @@ Give a one-line **confidence level (0–100)** with a one-sentence justification
 ### Timeline & scope
 <the table + critical path from Step 3>
 
+### Assumptions & open questions
+- **Assumed:** <assumption> — <what the verdict depends on>
+- **Open:** <ambiguity I couldn't resolve> — <who should answer>
+
 ### Verdict
 **<CONFIDENT / NOT YET / NO>** — <reasoning>
 **Confidence: <0–100>/100** — <one sentence>
